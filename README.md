@@ -1,4 +1,4 @@
-# taxi-platform
+# taxibaiamare.com
 
 Platformă de taxi modernă (BOLT-like), multi-city, cu obiectiv de scalare națională (România).
 Monorepo npm workspaces: backend realtime (Express + WebSocket), dispecerat live (Next.js), aplicații user/driver în plan.
@@ -48,6 +48,9 @@ Verificare: `npm run typecheck` (toate workspace-urile), `npm -w controlcenter r
 
 ## Documentație
 
-- [`CLAUDE.md`](CLAUDE.md) — starea reală a proiectului, convenții de cod, known issues
-- [`ROADMAP.md`](ROADMAP.md) — faze, dependențe, milestone-uri
+- [`CLAUDE.md`](CLAUDE.md) — instrucțiuni pentru agenți: reguli de lucru, convenții, interzis/permis
+- [`PRD.md`](PRD.md) — produs: suprafețe, utilizatori, reguli de business, starea reală, non-goals
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — tehnic: workspaces, flux de date, realtime, deployment, riscuri
+- [`ROADMAP.md`](ROADMAP.md) — faze, dependențe, milestone-uri (sursa de adevăr pentru ordinea de execuție)
+- [`CHANGELOG.md`](CHANGELOG.md) — istoric și motivele din spatele deciziilor
 - [`docs/konceptid-taxi.md`](docs/konceptid-taxi.md) — workflow-ul de execuție per issue (KonceptID)
