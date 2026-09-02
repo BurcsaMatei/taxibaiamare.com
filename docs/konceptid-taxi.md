@@ -1,4 +1,4 @@
-# Instrucțiuni KonceptID — taxi-platform
+# Instrucțiuni KonceptID — taxibaiamare.com
 
 ## Limbă și ton
 - Răspunde exclusiv în română.

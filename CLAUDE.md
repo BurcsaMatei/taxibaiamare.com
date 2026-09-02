@@ -1,124 +1,154 @@
-# CLAUDE.md — taxi-platform
+# CLAUDE.md — taxibaiamare.com
+
+Instrucțiuni pentru agentul care lucrează în acest repo. Se încarcă la fiecare sesiune, deci rămâne
+**scurt**. Detaliile stau în fișierele de mai jos și se citesc **la nevoie**.
+
+---
+
+## Harta documentației
+
+| Fișier | Când îl citești |
+| --- | --- |
+| **`CLAUDE.md`** (acesta) | Mereu — reguli de lucru + esențial |
+| [`PRD.md`](./PRD.md) | Produs: suprafețe, reguli de business, starea reală, non-goals |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Cod: workspaces, flux de date, realtime, deployment, **riscuri (§11)** |
+| [`ROADMAP.md`](./ROADMAP.md) | **Sursa de adevăr pentru ordinea de execuție** — faze, dependențe, milestone-uri |
+| [`CHANGELOG.md`](./CHANGELOG.md) | De ce a fost făcut ceva într-un anume fel; istoric |
+| `docs/konceptid-taxi.md` | Workflow-ul de colaborare KonceptID, per issue |
+| `AGENTS.md` | Pointer către acest fișier |
+
+**Regula de aur:** codul e sursa de adevăr. Dacă documentația contrazice codul, codul câștigă — și
+actualizezi documentația în același PR.
+
+---
 
 ## Ce este proiectul
 
-Platformă de taxi modernă (BOLT-like), multi-city, cu obiectiv de scalare națională (România).
-Monorepo npm cu suprafețele:
-
-- `api/` — backend central (Express 5 + WebSocket, port 3001)
-- `controlcenter/` — dispecerat (Next.js 15 Pages Router, port 3000)
-- `user/`, `driver/` — **inexistente încă**; numele din `workspaces` sunt rezervate intenționat, NU le șterge. **`user/` va fi app nativ React Native (iOS + Android) — nu PWA, nu web**; se distribuie prin App Store + Google Play
-- `packages/shared/` — `@taxi/shared` — **single source of truth** pentru domain types, contracts, statuses, realtime events, topics
-- `packages/tokens/` — `@taxi/tokens` — design tokens (Vanilla Extract, light/dark)
-
-`landing` va fi un workspace separat, viitor — nu există acum.
-
-## Starea reală (2026-07)
-
-- `controlcenter` e matur vizual: login PIN (HQ + per-city), hartă live Mapbox per oraș, HUD, city switcher, client WS cu reconnect.
-- `api` e funcțional ca demo realtime, dar **fără persistență**: comenzile sunt doar evenimente WS efemere — nu există DB, nu există `GET /orders`, refresh = totul pierdut. **Persistența decisă: Supabase** (neimplementată încă).
-- `api/src/modules/drivers/` și `payments/` sunt stub-uri goale (`export {}`).
-- Fleet directory: doar `baia-mare` are vehicule (250, sintetice); celelalte orașe au 0 → dispatch eșuează acolo.
-- Typecheck trece curat pe toate workspace-urile. Nu există niciun test în repo.
-
-### Known issues (fiecare are issue GitHub dedicat — repară-le DOAR prin issue-ul lor, nu en passant)
-
-1. `controlcenter/pages/ops/[cityId]/orders.tsx` e copy-paste din `map.tsx` și randează harta; `components/ops/orders/OpsOrdersPage.tsx` (pagina reală de comenzi) e nemontată. → taxi-017 (#31)
-2. ~~`api/.env.local` e comis în git — secretul HMAC și toate PIN-urile sunt COMPROMISE.~~ **Rezolvat (taxi-001, #15, 2026-07-02):** fișierul e scos din tracking (`**/.env.local` în `.gitignore` root), secretele au fost rotite — valorile vechi din istoric sunt moarte. Istoricul NU a fost rescris (repo privat, out of scope).
-3. ~~CI-ul din `controlcenter/.github/workflows/ci.yml` nu rulează niciodată.~~ **Rezolvat (taxi-002, #16, 2026-07-02):** workflow real la root (`.github/workflows/ci.yml` — shared build → typecheck → lint → api build → controlcenter build, pe push main + toate PR-urile); workflow-ul mort din `controlcenter/.github/` eliminat. Din taxi-047 (#77, 2026-07-03) CI-ul rulează pe Node 22, aliniat cu producția.
-4. ~~`controlcenter/pages/api/fleet/[cityId].ts` citește `API_BASE_URL`; restul proxy-urilor citesc `TAXI_API_BASE_URL`.~~ **Rezolvat (taxi-005, #19, 2026-07-03):** proxy-ul fleet citește `TAXI_API_BASE_URL` cu același pattern `readEnv`/`apiBaseUrl()` ca restul proxy-urilor.
-5. ~~Duplicate de tipuri: `CityPublic` (api vs. controlcenter), `ControlcenterTokenPayload` (api vs. controlcenter), `contracts/orders.ts` fictiv.~~ **Rezolvat complet:** taxi-008 (#22, 2026-07-03) — contractele orders rescrise după API-ul real (`CreateOrder*`, `PatchOrderStatus*`, `CallOrder*`) și importate de `api/src/modules/orders`; taxi-009 (#23, 2026-07-03) — `ControlcenterTokenPayload`/`ControlcenterScope` în `domain/auth.ts` și `CityPublic` (cu `mapCenter`/`mapZoom`) în `domain/city.ts`, ambele în `@taxi/shared`, importate de api și controlcenter — zero duplicate.
-
-### Deprecated (nu construi peste ele)
-
-- `controlcenter/pages/ops/map.tsx` și `ops/orders.tsx` (city-pickers legacy) — ruta canonică e `/ops/[cityId]/{map,orders}`
-- `GET /dev/cities/:cityId` (fără auth) — folosește `GET /cities/:cityId` cu Bearer token
-
-## Arhitectură și flux de date
+Platformă de taxi multi-oraș (BOLT-like) pentru România. Monorepo npm cu patru suprafețe planificate;
+**doar dispeceratul există.**
 
 ```
-browser → Next API proxies (controlcenter/pages/api/*) → Express :3001
-                                                       → WS /ws?token=... → topic hub
+api/               Express 5 + WS (:3001)          — funcțional local, NEDEPLOYAT
+controlcenter/     Next.js 15 (:3000)              — LIVE pe ops.taxibaiamare.com
+packages/shared/   @taxi/shared                    — SURSĂ UNICĂ pentru domeniu
+packages/tokens/   @taxi/tokens                    — design tokens
+user/ driver/      REZERVATE — nu există pe disc. Nu le șterge din `workspaces`.
 ```
 
-- Auth: PIN (per oraș sau HQ) → `POST /auth/controlcenter/login` → token HMAC custom (nu JWT) cu scope `hq` | `city` → autorizare pe subscribe la topicuri WS.
-- Topicuri: `city:` `order:` `driver:` `vehicle:` `controlcenter:` — registry-ul de evenimente permise per topic e în `api/src/modules/realtime/index.ts`. Din taxi-010 (#24) `driver:` e nevid: primește `order.offered`/`order.accepted`/`order.rejected` (lifecycle-ul driver — emiterea efectivă vine cu taxi-028); subscribe pe `driver:*` rămâne imposibil până la WS multi-subiect (taxi-021).
-- Prezența/locația vehiculelor: in-memory, TTL 60s, alimentate prin `PATCH /dev/vehicles/*`.
-- Dispatch: nearest-vehicle (Haversine), sincron la `POST /orders`, fără acceptare de către șofer.
-- Regulă: orice tip de domeniu, status, event sau contract nou se adaugă în `packages/shared`, niciodată local în api/controlcenter.
+Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user → driver → payments**.
 
-## Commands
+---
+
+## Starea în trei rânduri
+
+**M1 atins** (2026-07-03). Milestone curent **M2** — API persistent + controlcenter complet.
+Punct de intrare: **taxi-011 (#25), Supabase**. 34 issues deschise. Ultimul commit de cod: 2026-07-03.
+**Nu există persistență** (refresh = totul pierdut) și **API-ul nu e deployat** (login-ul eșuează
+controlat pe producție — comportament așteptat). Detalii → `PRD.md` §5.
+
+---
+
+## Reguli de lucru
+
+- **Branch per issue. Squash & merge în `main`.** Fără commit direct pe `main` pentru cod.
+- Commit: `type(scope): description` — ex. `feat(controlcenter): …`, `chore(api): …`.
+- Workflow per issue: **Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update
+  `CLAUDE.md` + `ROADMAP.md`**. Hot-fix-urile mici pot sări peste Prompt 1, dar **issue dedicat e
+  obligatoriu**.
+- `npm run typecheck` + `npm -w controlcenter run lint` curate înainte de commit.
+- **CI-ul GitHub nu pornește** (blocaj de facturare la nivel de cont). Verificarea reală e Vercel Preview.
+
+### Ordinea de build — cauza #1 de build eșuat
 
 ```bash
-# API: build first — dev runs dist/
-npm -w api run build && npm run dev:api        # node api/dist/index.js on :3001
-npm run dev:controlcenter                       # next dev on :3000
-
-npm run sim:fleet -- --city baia-mare --count 20  # fleet simulator (tsx, WSL-friendly); Ctrl+C = offline
-npm run typecheck                               # all workspaces (tsc --noEmit)
-npm -w controlcenter run lint                   # ESLint
-npm -w controlcenter run check:all              # format:check + typecheck + lint
-npm -w packages/shared run build                # required before api build (dist consumed)
+npm -w packages/shared run build   # ÎNTOTDEAUNA primul — dist-ul e consumat de api și controlcenter
 ```
 
-- Node 22.x (`controlcenter/.nvmrc`, `engines` în controlcenter — aliniat cu Vercel), npm workspaces (no pnpm/turbo).
-- `scripts/project-tree.ps1` (singurul `.ps1` rămas) e **PowerShell-only** — nu rulează pe WSL fără `pwsh`. Simulatoarele de flotă sunt acum Node/tsx (`npm run sim:fleet`, taxi-004).
-- Env: vezi `api/.env.example` și `controlcenter/.env.example` — reale, fiecare cheie documentată e citită efectiv de cod (taxi-003). API-ul nu încarcă singur `.env.local` — pornește-l cu `node --env-file=api/.env.local api/dist/index.js`.
+---
 
-## Code conventions (KonceptID)
+## Interzis / Permis
 
-- TypeScript strict, **no `any`**. Controlcenter additionally uses `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`.
-- **Vanilla Extract only** — styles live in `styles/*.css.ts`; **no inline styles**, no global CSS beyond `globals.css` / `theme.global.css`. Consume tokens from `@taxi/tokens`.
-- **Relative imports** — no path aliases. Type imports inline (`import { type Foo }` — enforced by ESLint `consistent-type-imports`).
-- Section comments pattern used across the codebase:
+**Interzis:**
+
+- commit de `.env.local` sau secrete
+- **inline styles**, CSS global nou, tipuri de domeniu în afara `@taxi/shared`
+- dependențe noi semnificative fără discuție
+- **reparat known issues sau șters rute deprecated fără să ți se ceară** — fiecare are issue-ul lui
+- rulat scripturi `.ps1` din WSL (`scripts/project-tree.ps1` e PowerShell-only)
+- introdus bibliotecă de validare (zod etc.) — stilul e guard-uri scrise de mână care întorc `null`
+
+**Permis fără să întrebi:** refactor local în fișierele pe care le atingi pentru task, aliniere la
+convenții, completare de tipuri lipsă în `@taxi/shared` când task-ul o cere.
+
+---
+
+## Convenții de cod
+
+- TypeScript strict, **fără `any`**. Controlcenter adaugă `exactOptionalPropertyTypes`,
+  `noUncheckedIndexedAccess`, `verbatimModuleSyntax`.
+- **Vanilla Extract only** (`styles/*.css.ts`), tokens din `@taxi/tokens`.
+- **Importuri relative**, fără alias-uri. Type imports inline: `import { type Foo }`.
+- Comentarii de secțiune:
   ```ts
   // ==============================
   // Section name
   // ==============================
   ```
-- Prettier: 100 cols, double quotes, semicolons, trailing commas. ESLint must be clean before commit.
-- Package naming: `@taxi/*`. Validation style: hand-rolled narrow guards (`isObject`, `normalize*`) returning `null` on invalid — follow it, don't introduce a validation lib without discussion.
-- Responses API: `{ ok: true, ... } | { ok: false, error: string }` — keep this shape.
+- Prettier: 100 coloane, ghilimele duble, `;`, trailing commas.
+- **Forma răspunsurilor API:** `{ ok: true, ... } | { ok: false, error: string }`.
+- Pachete: `@taxi/*`.
 
-## Git workflow
+---
 
-- Branch per issue, **squash & merge** into `main`. No direct commits to `main` for feature work.
-- Commit format: `type(scope): description` — e.g. `feat(controlcenter): ...`, `chore(api): ...`.
+## Regula centrală
 
-## Deployment
+> **Orice tip de domeniu, status, eveniment sau contract nou se adaugă în `packages/shared` —
+> niciodată local în `api/` sau `controlcenter/`.**
 
-- **Controlcenter → Vercel — LIVE din 2026-07-02** pe **`ops.taxibaiamare.com`** (+ apex `taxibaiamare.com`), proiect `taxi-platform-controlcenter` (team Koncept ID's Projects). Varianta A: un proiect, două pagini interne `/ops/[cityId]/{map,orders}`. Production doar din `main`, preview pe orice branch/PR.
-- **Config-ul de build trăiește în `controlcenter/vercel.json`** (din 2026-07-02, PR #69): `buildCommand` cu **path absolut** — `cd /vercel/path0 && npm -w packages/shared run build && npm -w controlcenter run build` (shared înaintea controlcenter — dist-ul e consumat de typecheck). Lecție hard-won: Vercel rulează `buildCommand` cu working directory = Root Directory (`controlcenter/`), deci comenzile `npm -w` nu găsesc workspace-urile fără `cd /vercel/path0` (rădăcina repo-ului în build container). Dashboard: Root Directory `controlcenter`, Node 22, **Build Command Override OFF** (comanda trăiește doar în `vercel.json`).
-- Env pe Vercel (dashboard, nu hardcodat): `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL=https://api.taxibaiamare.com`, `NEXT_PUBLIC_TAXI_WS_URL=wss://api.taxibaiamare.com/ws`. `next-pwa` a fost eliminat complet (taxi-007, #21, 2026-07-03) — `NEXT_PUBLIC_ENABLE_PWA` nu mai există; PWA se reintroduce doar când devine cerință (probabil driver).
-- **API-ul (Express + WS) NU merge pe Vercel** — VPS Hetzner, `api.taxibaiamare.com` (deployment separat, în afara taxi-044). Până la VPS, login-ul pe producție eșuează controlat — e așteptat.
-- DNS (Hostico): CNAME `ops` → `cname.vercel-dns.com.`
-- Proiectele Vercel pentru driver/admin se creează când suprafețele vor exista (extindere din varianta A la modelul complet din #58). **App-ul user NU are subdomeniu web** — e nativ (React Native), distribuit prin store-uri; nu există `app.taxibaiamare.com` în plan.
+Nu e preferință de stil: duplicarea de tipuri a produs deja bug-uri reale (taxi-008/009).
+Orice eveniment realtime nou se înregistrează și în `api/src/modules/realtime/index.ts`.
 
-## Interzis / Permis
+---
 
-**Interzis:**
-- commit de `.env.local` sau secrete (istoricul e deja compromis — vezi Known issues #2)
-- inline styles, CSS global nou, tipuri de domeniu în afara `@taxi/shared`
-- dependențe noi semnificative fără discuție prealabilă
-- reparat known issues sau șters rute deprecated fără să ți se ceară
-- rulat scripturi `.ps1` din WSL
+## Deprecated — nu construi peste ele
 
-**Permis fără întrebat:** refactor local în fișierele pe care le atingi pentru task, aliniere la convențiile de mai sus, completare de tipuri lipsă în `@taxi/shared` când task-ul o cere.
+- `controlcenter/pages/ops/map.tsx` și `ops/orders.tsx` (city-pickers legacy) — ruta canonică e
+  `/ops/[cityId]/{map,orders}`
+- `GET /dev/cities/:cityId` (fără auth) — folosește `GET /cities/:cityId` cu Bearer token
 
-## Roadmap
+---
 
-Ordinea de dezvoltare (decisă, fixă): **controlcenter → landing → user → driver → payments**.
+## Comenzi
 
-Planul complet trăiește în **`ROADMAP.md`** (root): 7 faze + post-MVP, drum critic, matrice de dependențe, milestone-uri M1–M4. Backlog-ul inițial: **45 issues (#15–#59)**, mapare `#nr = taxi-XXX + 14` — **valabilă DOAR pentru intervalul #15–#59**; issue-urile noi de după primesc numărul curent GitHub (taxi-046 = #76, taxi-047 = #77). Workflow-ul de execuție per issue (Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update CLAUDE.md + ROADMAP.md): `docs/konceptid-taxi.md`; hot-fix-urile mici pot sări peste Prompt 1, cu issue dedicat obligatoriu.
+```bash
+npm -w packages/shared run build                  # OBLIGATORIU primul
+npm -w api run build
+node --env-file=api/.env.local api/dist/index.js  # :3001 — API-ul nu încarcă singur .env.local
+npm run dev:controlcenter                         # :3000
+npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă; Ctrl+C = offline
+npm run typecheck                                 # toate workspace-urile
+npm -w controlcenter run check:all                # format:check + typecheck + lint
+```
 
-**M1 atins (2026-07-03) — Faza 0 complet închisă; din Faza 1 mai rămâne doar taxi-011.** Milestone curent: M2 — API persistent + controlcenter funcțional complet. Punct de intrare: taxi-011 (#25, Supabase setup). Duplicate rămase netracked (audit 2026-07-03, de făcut issue la prima atingere): `FleetVehicle` ×3 (api `fleetDirectory`, controlcenter `opsMap.types`, fleet proxy — de unificat la taxi-016/017), login contract (`LoginOk` api vs. `ControlcenterLoginOk` controlcenter — de unificat la taxi-014).
+Node 22.x. Env: `api/.env.example` + `controlcenter/.env.example` — reale, fiecare cheie e citită de cod.
 
-În sesiunea de setup (2026-07-02) nu s-a modificat niciun cod — doar documentație (CLAUDE.md, docs/konceptid-taxi.md, ROADMAP.md) și deschiderea celor 45 de issues.
+---
 
-## Referințe
+## Referințe rapide
 
-- `ROADMAP.md` — secvență, dependențe, milestone-uri (sursa de adevăr pentru ordinea de execuție)
-- `docs/konceptid-taxi.md` — instrucțiuni KonceptID: workflow issues, format, convenții de colaborare
-- `./briefing.sh` — snapshot de sesiune (git, env, scripts); generează `BRIEFING.md` (gitignored)
 - `packages/tokens/src/theme.css.ts` — design tokens
-- `api/src/modules/realtime/index.ts` — registry evenimente ↔ topicuri (de actualizat la orice event nou)
+- `api/src/modules/realtime/index.ts` — registry evenimente ↔ topicuri (**de actualizat la orice event nou**)
+- `packages/shared/src/` — domeniul: `contracts/orders.ts`, `domain/{auth,city,driver,geo,order,service,status,user,vehicle}.ts`, `events/{realtime,topics}.ts`
+- `controlcenter/vercel.json` — configul de build (path absolut; vezi `ARCHITECTURE.md` §10)
+- `./briefing.sh` — snapshot de sesiune (git, env, scripts); generează `BRIEFING.md` (gitignored)
+
+---
+
+## De reținut
+
+- **Doar `baia-mare` are flotă** (250 vehicule sintetice). În celelalte 4 orașe, dispecerizarea eșuează —
+  e așteptat, nu e bug.
+- **`OpsOrdersPage.tsx` există dar nu e montat nicăieri** — ruta de comenzi afișează harta. → taxi-017 (#31)
+- Modulele `api/src/modules/drivers/` și `payments/` sunt stub-uri goale.
+- **Zero teste** în repo.
+- Aplicația **user va fi nativă (React Native)**, nu PWA, nu web. Nu există `app.taxibaiamare.com` în plan.
