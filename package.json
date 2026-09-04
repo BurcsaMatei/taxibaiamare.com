@@ -6,10 +6,14 @@
     "doc": "docs"
   },
   "scripts": {
+    "dev": "npm -w controlcenter run dev",
+    "build": "npm -w packages/shared run build && npm -ws run build --if-present",
+    "start": "npm -w controlcenter run start",
+    "typecheck": "npm -ws run typecheck --if-present",
+    "lint": "npm -ws run lint --if-present",
+    "check:all": "npm run typecheck && npm run lint",
+    "verify:prod": "npm run build && NODE_ENV=production npm start",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "npm -ws run lint",
-    "typecheck": "npm -ws run typecheck",
-    "build": "npm -ws run build",
     "dev:api": "node api/dist/index.js",
     "dev:controlcenter": "npm -w controlcenter run dev",
     "sim:fleet": "tsx scripts/dev-simulate-fleet.ts",
@@ -32,5 +36,8 @@
   "devDependencies": {
     "tsx": "^4.20.5",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
