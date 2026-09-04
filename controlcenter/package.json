@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run lint --if-present",
     "preview": "next dev -p 3002",
-    "check:all": "npm run format:check && npm run typecheck && npm run lint"
+    "check:all": "npm run format:check && npm run typecheck && npm run lint",
+    "verify:prod": "npm run build && NODE_ENV=production npm start"
   },
   "dependencies": {
     "@taxi/shared": "file:../packages/shared",
@@ -46,6 +47,6 @@
     "typescript": "^5.5.4"
   },
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   }
 }

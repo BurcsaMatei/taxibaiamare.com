@@ -12,6 +12,36 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-09-04 — Val 0.3 + 0.6: aliniere Node + scripturi standard (#84)
+
+Task de portofoliu (`konceptid-ops`). **Zero modificări de cod.**
+
+- `engines.node` → **`"24.x"`** la root (lipsea) **și în `controlcenter`** (era `22.x`)
+- `.nvmrc` creat, valoarea `24`
+- root: `dev`, `start`, `check:all`, `verify:prod` — delegări către workspaces
+- root `build` respectă explicit ordinea: `packages/shared` întâi, apoi restul
+
+**Cel mai important lucru din acest PR:** setarea de Node din dashboard-ul Vercel fusese trecută pe
+`24.x`, dar build-ul ar fi rămas pe **Node 22**. `engines.node` din `package.json` are prioritate
+față de dashboard, iar `controlcenter` — directorul pe care îl construiește Vercel — declara `22.x`.
+Task-ul 0.6 din portofoliu **nu se putea rezolva din interfață**; era în cod.
+
+**Defect preexistent reparat pe drum:** root-ul avea `lint` = `npm -ws run lint` și `typecheck`
+analog, iar ambele **eșuau** — `packages/tokens` nu are aceste scripturi. Verificat pe `main` înainte
+de orice modificare: erau roșii și acolo. Adăugat `--if-present`, deci acum trec și acoperă
+workspace-urile care chiar au scripturile.
+
+**Verificat:** `check:all` verde, `npm run build` verde pe toate workspace-urile în ordinea corectă
+(`@taxi/shared` → `controlcenter` → `@taxi/api`), și `verify:prod` executat efectiv — server pornit
+în regim producție, HTTP 200.
+
+**Observat, nereparat aici:** `package.json` declară workspace-urile `user` și `driver`, care nu
+există pe disc. Nu blochează nimic (`--if-present`), dar e o intrare moartă. Alt PR, altă variabilă.
+
+Closes #84
+
+---
+
 ## 2026-09-02 — Redenumire proiect + restructurare documentație
 
 **Redenumire** (PR #80): repo GitHub `taxi-platform` → `taxibaiamare.com`, folder local, `package.json`.
