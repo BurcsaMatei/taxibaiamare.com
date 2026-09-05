@@ -8,7 +8,7 @@ Monorepo npm workspaces: backend realtime (Express + WebSocket), dispecerat live
 | Workspace | Rol | Status |
 |---|---|---|
 | `api/` | Backend central — Express 5 + WS, port 3001 | funcțional (demo realtime, fără persistență) |
-| `controlcenter/` | Dispecerat — Next.js 15, hartă live Mapbox, port 3000 | LIVE pe [ops.taxibaiamare.com](https://ops.taxibaiamare.com) |
+| `controlcenter/` | Dispecerat — Next.js 16, hartă live Mapbox, port 3000 | LIVE pe [ops.taxibaiamare.com](https://ops.taxibaiamare.com) |
 | `packages/shared/` | `@taxi/shared` — domain types, contracts, evenimente realtime | sursă unică de adevăr |
 | `packages/tokens/` | `@taxi/tokens` — design tokens (Vanilla Extract, light/dark) | stabil |
 | `user/`, `driver/` | App client (React Native, iOS + Android), respectiv driver PWA | inexistente încă — nume rezervate |

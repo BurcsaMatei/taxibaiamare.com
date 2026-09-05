@@ -14,7 +14,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | --- | --- |
 | Monorepo | **npm workspaces** — fără pnpm, fără Turborepo |
 | Backend | **Express 5 + WebSocket** (`ws`), port 3001 |
-| Frontend dispecerat | **Next.js 15 — Pages Router**, port 3000 |
+| Frontend dispecerat | **Next.js 16 — Pages Router**, port 3000 |
 | Hartă | Mapbox GL |
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
@@ -28,7 +28,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 
 ```
 api/               backend central — Express 5 + WS (:3001)
-controlcenter/     dispecerat — Next.js 15 (:3000)          ← singura suprafață live
+controlcenter/     dispecerat — Next.js 16 (:3000)          ← singura suprafață live
 packages/shared/   @taxi/shared  — SURSĂ UNICĂ DE ADEVĂR pentru domeniu
 packages/tokens/   @taxi/tokens  — design tokens (light/dark)
 user/              REZERVAT — nu există pe disc. React Native, nativ.
