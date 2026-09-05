@@ -26,9 +26,7 @@ type WsIncoming =
   | { type: "ping" };
 
 type WsOutgoing =
-  | { type: "subscribe"; topic: string }
-  | { type: "unsubscribe"; topic: string }
-  | { type: "ping" };
+  { type: "subscribe"; topic: string } | { type: "unsubscribe"; topic: string } | { type: "ping" };
 
 // ==============================
 // Constante
