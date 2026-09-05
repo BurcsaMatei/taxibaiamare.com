@@ -55,10 +55,6 @@ const nextConfig = {
     "lodash-es": { transform: "lodash-es/{{member}}" },
   },
 
-  eslint: {
-    dirs: ["pages", "components", "lib", "styles", "scripts"],
-  },
-
   async headers() {
     return [
       {

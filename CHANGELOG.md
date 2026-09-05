@@ -12,6 +12,45 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-09-05 — Val 2.9: Next 15 → 16
+
+Task de portofoliu (`konceptid-ops`, Val 2.9). **`next` 15.5.25 → 16.3.4.** React 18 și ESLint 8
+rămân neatinse — un PR, o singură variabilă.
+
+### Ce a cerut intervenție
+
+- **`build` → `next build --webpack`.** Next 16 folosește Turbopack implicit, iar
+  `@vanilla-extract/next-plugin` injectează configurație `webpack`.
+- **Cheia `eslint` scoasă din `next.config.mjs`** — Next 16 nu o mai acceptă. Era config mort:
+  `lint` cheamă `eslint .` direct, nu `next lint` (eliminat în 16).
+- **`tsconfig.json` rescris de Next 16** (`jsx` → `react-jsx`). Commitat, altfel reapare la fiecare build.
+- **`AGENTS.md`**: blocul `nextjs-agent-rules`, generat cu codemod-ul `agents-md`.
+
+`eslint-config-next` **rămâne pe 15** — cel de 16 cere `eslint >=9`, iar portofoliul e pe 8.57.1.
+
+### Mecanica de monorepo
+
+`next` s-a instalat **în workspace-ul `controlcenter`** (`npm i -w controlcenter next@16.3.4`), nu la
+rădăcină. Ordinea de build a rămas cea din script: `packages/shared` primul, apoi restul cu
+`npm -ws run build --if-present`.
+
+Scriptul de build al lui `controlcenter` e compus și mai strict decât în restul portofoliului —
+`npm run format:check && npm run check && next build` — deci flag-ul a devenit
+`... && next build --webpack`. **Poarta de `prettier` a prins imediat** că fișierul editat de mine
+(`next.config.mjs`) nu mai era formatat; rulat `prettier --write` și build-ul a trecut. E un mecanism
+util: aici formatarea e parte din build, nu doar din lint.
+
+### Verificat pe build de producție real
+
+`check:all` verde pe toate workspace-urile. Server cu `NODE_ENV=production`: `/` 200, `/ops/map` 200,
+`/ops/orders` 200; headerele din `controlcenter/middleware.ts` prezente.
+
+`/robots.txt` dă 404 — **neschimbat**, verificat și pe producția de pe Next 15; ruta nu există.
+
+**`npm audit`: 3 → 1** (un singur `low` rămas).
+
+---
+
 ## 2026-09-04 — Val 0.3 + 0.6: aliniere Node + scripturi standard (#84)
 
 Task de portofoliu (`konceptid-ops`). **Zero modificări de cod.**

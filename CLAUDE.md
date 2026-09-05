@@ -29,7 +29,7 @@ Platformă de taxi multi-oraș (BOLT-like) pentru România. Monorepo npm cu patr
 
 ```
 api/               Express 5 + WS (:3001)          — funcțional local, NEDEPLOYAT
-controlcenter/     Next.js 15 (:3000)              — LIVE pe ops.taxibaiamare.com
+controlcenter/     Next.js 16 (:3000)              — LIVE pe ops.taxibaiamare.com
 packages/shared/   @taxi/shared                    — SURSĂ UNICĂ pentru domeniu
 packages/tokens/   @taxi/tokens                    — design tokens
 user/ driver/      REZERVATE — nu există pe disc. Nu le șterge din `workspaces`.
