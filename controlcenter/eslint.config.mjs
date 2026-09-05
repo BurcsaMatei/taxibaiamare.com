@@ -51,6 +51,11 @@ export default defineConfig([
 
       "jsx-a11y/anchor-is-valid": "off",
 
+      // no-console — politică de portofoliu (konceptid-ops, Val 3, 2026-09-05). `warn`/`error`
+      // sunt semnale reale, `log`/`debug`/`info` sunt reziduu de debug. `pages/api`/`scripts`
+      // scapă mai jos, unde logging-ul liber e normal.
+      "no-console": ["error", { allow: ["warn", "error"] }],
+
       // ✅ prevent rule-load crash + consistent behavior
       "@typescript-eslint/no-unused-expressions": [
         "error",
@@ -88,6 +93,15 @@ export default defineConfig([
       "react-hooks/set-state-in-render": "warn",
       "react-hooks/config": "warn",
       "react-hooks/gating": "warn",
+    },
+  },
+
+  // no-console: liber în rute API și scripturi de tooling — logging server-side/build, nu
+  // reziduu de debug în bundle-ul de client.
+  {
+    files: ["pages/api/**/*.{ts,tsx,js}", "scripts/**/*.{ts,js,mjs}"],
+    rules: {
+      "no-console": "off",
     },
   },
 ]);
