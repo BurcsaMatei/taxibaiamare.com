@@ -9,7 +9,7 @@ function isDev(): boolean {
 
 function devWarn(msg: string, ...args: unknown[]): void {
   if (isDev()) {
-    // eslint-disable-next-line no-console
+    // no-console
     console.warn(`[config.ts] ${msg}`, ...args);
   }
 }
