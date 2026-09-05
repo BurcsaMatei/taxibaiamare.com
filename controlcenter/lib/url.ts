@@ -17,7 +17,7 @@ function isDev(): boolean {
 }
 function devWarn(msg: string, ...args: unknown[]) {
   if (isDev()) {
-    // eslint-disable-next-line no-console
+    // no-console
     console.warn(`[url.ts] ${msg}`, ...args);
   }
 }

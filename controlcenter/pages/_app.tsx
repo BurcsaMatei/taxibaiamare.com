@@ -29,7 +29,7 @@ const isProd = process.env.NODE_ENV === "production";
 /** Dev-only warning (nu poluează consola în producție) */
 function devWarn(message: string): void {
   if (!isProd && typeof console !== "undefined") {
-    // eslint-disable-next-line no-console
+    // no-console
     console.warn(`[KonceptID] ${message}`);
   }
 }

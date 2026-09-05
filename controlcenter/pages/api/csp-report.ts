@@ -150,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
+    // no-console
     console.warn("[CSP-Report]", JSON.stringify(toDevSummary(payload)));
   }
 

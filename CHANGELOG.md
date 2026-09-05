@@ -12,6 +12,63 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-09-05 — Val 3.9: ESLint 8 → 9, flat config
+
+Task de portofoliu (`konceptid-ops`, Val 3.9). **`eslint` 8.57.1 → 9.x**, `.eslintrc.cjs` +
+`.eslintignore` → **`eslint.config.mjs`**, `eslint-config-next` 15.5 → **16.3.4** (aliniat cu
+framework-ul, pe 16 din Val 2), `@typescript-eslint` 7.18 → **8.69**, `unused-imports` 3 → 4,
+`eslint-config-prettier` 9 → 10.
+
+ESLint 8.57.1 e **EOL**, și era exact ce bloca `eslint-config-next@16`: la Val 2 l-am ținut deliberat
+pe 15, ca să nu amestecăm variabile.
+
+**Regulile proiectului au fost preluate verbatim** din `.eslintrc.cjs`, nu rescrise. Patternurile din
+`.eslintignore` au trecut în `globalIgnores` — ESLint 9 nu mai citește acel fișier.
+
+**Val 3.9** din `konceptid-ops` — ultimul din val, și singurul monorepo. ESLint e declarat doar în workspace-ul `controlcenter`, deci acolo s-a făcut migrarea; instalarea s-a făcut din rădăcină, cu `-w controlcenter`.
+
+`eslint` **8.57.1 → 9.39.5** · `.eslintrc.cjs` + `.eslintignore` → **`eslint.config.mjs`** · `eslint-config-next` **15.5 → 16.3.4** · `@typescript-eslint` **7.18 → 8.69**.
+
+ESLint 8.57.1 e **EOL**, și era exact ce bloca `eslint-config-next@16`: la Val 2 l-am ținut deliberat pe 15, ca să nu amestecăm variabile.
+
+**Regulile proiectului au fost preluate verbatim** din `.eslintrc.cjs`. Patternurile din `.eslintignore` au trecut în `globalIgnores` — ESLint 9 nu mai citește acel fișier.
+
+**Migrarea nu adaugă reguli noi.** Directivele `eslint-disable` care indicau reguli neactivate au devenit comentarii simple: justificarea autorului rămâne, directiva moartă dispare.
+
+## Echivalență, dovedită
+
+Un **fișier-sondă** care încalcă deliberat câte o regulă din fiecare familie, trecut prin ambele configurații: **același număr de mesaje, aceleași reguli**, înainte și după. Baseline-ul era 0 probleme, deci „build verde" n-ar fi dovedit nimic.
+
+## Descoperirea care contează: `eslint-config-next@16` activează React Compiler
+
+Nu e o simplă versiune nouă de lint. v16 aduce **13 reguli `react-hooks` ca erori**, față de v15 care avea doar `rules-of-hooks` (error) și `exhaustive-deps` (warn). Adică **12 reguli noi**, toate erori, sosite ca efect secundar al alinierii cu framework-ul.
+
+Ele lovesc tipare **preexistente**, scrise deliberat și cu justificare în cod: „citește din `localStorage` la montare" (imposibil altfel în Pages Router, nu există `localStorage` la SSR), `ref.current` citit în logica de drag, componente construite condiționat în render.
+
+**Toate 12 sunt coborâte la avertisment, deliberat.** O migrare de lint nu are voie să devină tăcut o refactorizare React pe site-uri live. `rules-of-hooks` **rămâne eroare** — era eroare și în v15, și e corectitudine reală.
+
+Poarta rămâne astfel utilă pentru **regresii**, iar datoria existentă e catalogată ca task separat în `konceptid-ops` → Val 3.
+
+## Mecanica de monorepo
+
+`eslint.config.mjs` a fost **formatat cu `prettier`** imediat după generare: build-ul lui `controlcenter` are `format:check` în poartă (`npm run format:check && npm run check && next build --webpack`), deci un fișier nou neformatat ar fi picat build-ul. Aceeași capcană ca la migrarea pe Next 16.
+
+## Verificat
+
+`eslint .` → **0 erori**, 9 avertismente: `react-hooks/set-state-in-effect`, `react-hooks/refs` și `react-hooks/purity`.
+
+Acoperire identică: **53 de fișiere `.ts`/`.tsx`**.
+
+`check:all` verde pe toate workspace-urile, `npm run build` verde — cu ordinea corectă, `packages/shared` primul.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_01VqYdnje8b4nGFpUe79R6QR
+
+Runbook: [`runbooks/eslint-9-flat-config.md`](../konceptid-ops/runbooks/eslint-9-flat-config.md).
+
+---
+
 ## 2026-09-05 — Val 2.9: Next 15 → 16
 
 Task de portofoliu (`konceptid-ops`, Val 2.9). **`next` 15.5.25 → 16.3.4.** React 18 și ESLint 8
