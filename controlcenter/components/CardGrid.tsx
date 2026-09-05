@@ -6,6 +6,7 @@
 import { withBase } from "../lib/config";
 import Card from "./Card";
 import Grid from "./Grid";
+import type { ReactElement } from "react";
 
 // ==============================
 // Types
@@ -32,7 +33,7 @@ export default function CardGrid({
   onItemClick,
   aboveTheFold = false,
   priorityCount = 6,
-}: Props): JSX.Element {
+}: Props): ReactElement {
   const handleActivate = (i: number): void => onItemClick?.(i);
 
   return (

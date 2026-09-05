@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 
 import { SITE, withBase } from "../lib/config";
 import SkipLink from "./SkipLink";
+import type { ReactElement } from "react";
 
 // ==============================
 // Types
@@ -21,7 +22,7 @@ type LayoutProps = {
 // ==============================
 // Component
 // ==============================
-function Layout({ children }: LayoutProps): JSX.Element {
+function Layout({ children }: LayoutProps): ReactElement {
   const siteName = SITE.name || "Control Center";
 
   return (

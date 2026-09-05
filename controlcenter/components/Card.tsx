@@ -23,6 +23,7 @@ import {
   titleClass,
 } from "../styles/card.css";
 import SmartLink from "./SmartLink";
+import type { ReactElement } from "react";
 
 // ==============================
 // Types
@@ -90,7 +91,7 @@ function ratioClass(ratio: `${number}/${number}`): string {
 // ==============================
 // Component
 // ==============================
-export default function Card(props: Props): JSX.Element {
+export default function Card(props: Props): ReactElement {
   // ============================
   // Shell mode
   // ============================

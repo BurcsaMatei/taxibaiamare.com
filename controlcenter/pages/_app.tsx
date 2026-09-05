@@ -10,7 +10,7 @@ import "../styles/theme.global.css"; // mapează tokens → elemente
 // Theme classes (Vanilla Extract) — DIRECT din tokens (fără shim)
 import { themeClassDark, themeClassLight } from "@taxi/tokens";
 import type { AppProps } from "next/app";
-import { createContext, useContext, useEffect, useState } from "react";
+import { type ReactElement, createContext, useContext, useEffect, useState } from "react";
 
 // App layout
 import Layout from "../components/Layout";
@@ -78,7 +78,7 @@ export function useTheme(): ThemeContextValue {
 // ==============================
 // Component
 // ==============================
-export default function App({ Component, pageProps }: AppProps): JSX.Element {
+export default function App({ Component, pageProps }: AppProps): ReactElement {
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [userOverride, setUserOverride] = useState<boolean>(false);
 
