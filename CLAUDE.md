@@ -50,11 +50,11 @@ controlat pe producție — comportament așteptat). Detalii → `PRD.md` §5.
 
 ## Reguli de lucru
 
-- **Branch per issue. Squash & merge în `main`.** Fără commit direct pe `main` pentru cod.
+Workflow (branch, când e nevoie de issue, analiză→execuție, PR, merge) → `konceptid-ops` →
+`STANDARDS.md` §7. Nu se repetă aici.
+
 - Commit: `type(scope): description` — ex. `feat(controlcenter): …`, `chore(api): …`.
-- Workflow per issue: **Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update
-  `CLAUDE.md` + `ROADMAP.md`**. Hot-fix-urile mici pot sări peste Prompt 1, dar **issue dedicat e
-  obligatoriu**.
+- După merge: update `CLAUDE.md` + `ROADMAP.md` dacă starea s-a schimbat.
 - `npm run typecheck` + `npm -w controlcenter run lint` curate înainte de commit.
 - **CI-ul GitHub nu pornește** (blocaj de facturare la nivel de cont). Verificarea reală e Vercel Preview.
 
