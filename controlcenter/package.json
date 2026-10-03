@@ -2,7 +2,7 @@
   "name": "taxi-platform-made-by-konceptid",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "npm run format:check && npm run check && next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
