@@ -14,6 +14,8 @@ const IS_PROD = process.env.NODE_ENV === "production";
 // ==============================
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // next dev nu mai rescrie AGENTS.md / CLAUDE.md (pointer-ele noastre, urmărite în git)
+  agentRules: false,
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
