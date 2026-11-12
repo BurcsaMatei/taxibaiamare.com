@@ -7,13 +7,14 @@ import type { Express, Request, Response } from "express";
 import type { ControlcenterScope, ControlcenterTokenPayload } from "@taxi/shared";
 
 import { signControlcenterToken } from "./controlcenterToken.js";
+import { clearLoginFailures, isLoginBlocked, recordLoginFailure } from "./loginRateLimit.js";
+import { verifyPassword } from "./password.js";
 
 // ==============================
 // Types
 // ==============================
 type LoginBody = {
-  cityId?: unknown;
-  pin?: unknown;
+  password?: unknown;
 };
 
 type LoginOk = {
@@ -28,6 +29,12 @@ type LoginErr = {
   ok: false;
   error: string;
 };
+
+// ==============================
+// Constante
+// ==============================
+const DEFAULT_HQ_CITY_ID = "baia-mare";
+const DEFAULT_TTL_SEC = 86_400;
 
 // ==============================
 // Utils
@@ -54,31 +61,6 @@ function nowSec(): number {
   return Math.floor(Date.now() / 1000);
 }
 
-function parsePinsJson(raw: string): Record<string, string> | null {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
-
-  if (!isObject(parsed)) return null;
-
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(parsed)) {
-    if (typeof k !== "string") continue;
-    if (typeof v !== "string") continue;
-
-    const key = k.trim().toLowerCase();
-    const val = v.trim();
-    if (!key || !val) continue;
-
-    out[key] = val;
-  }
-
-  return out;
-}
-
 function bad(res: Response, code: number, msg: string): void {
   const body: LoginErr = { ok: false, error: msg };
   res.status(code).json(body);
@@ -88,80 +70,49 @@ function bad(res: Response, code: number, msg: string): void {
 // Module
 // ==============================
 export function registerAuthModule(app: Express): void {
-  app.post("/auth/controlcenter/login", (req: Request, res: Response) => {
+  app.post("/auth/controlcenter/login", async (req: Request, res: Response) => {
     const secret = readEnv("TAXI_AUTH_TOKEN_SECRET");
-    const hqPin = readEnv("TAXI_CONTROL_CENTER_HQ_PIN");
-    const hqCityId = readEnv("TAXI_CONTROL_CENTER_HQ_CITY_ID");
-    const pinsJson = readEnv("TAXI_CONTROL_CENTER_CITY_PINS_JSON");
+    const passwordHash = readEnv("TAXI_CONTROL_CENTER_PASSWORD_HASH");
+    const hqCityId = (readEnv("TAXI_CONTROL_CENTER_HQ_CITY_ID") ?? DEFAULT_HQ_CITY_ID).toLowerCase();
 
     if (!secret) return bad(res, 500, "Missing TAXI_AUTH_TOKEN_SECRET");
-    if (!hqPin) return bad(res, 500, "Missing TAXI_CONTROL_CENTER_HQ_PIN");
-    if (!hqCityId) return bad(res, 500, "Missing TAXI_CONTROL_CENTER_HQ_CITY_ID");
-    if (!pinsJson) return bad(res, 500, "Missing TAXI_CONTROL_CENTER_CITY_PINS_JSON");
+    if (!passwordHash) return bad(res, 500, "Missing TAXI_CONTROL_CENTER_PASSWORD_HASH");
 
-    const cityPins = parsePinsJson(pinsJson);
-    if (!cityPins) return bad(res, 500, "Invalid TAXI_CONTROL_CENTER_CITY_PINS_JSON");
+    const ttl = readIntEnv("TAXI_AUTH_TOKEN_TTL_SEC") ?? DEFAULT_TTL_SEC;
 
-    const ttl = readIntEnv("TAXI_AUTH_TOKEN_TTL_SEC") ?? 86_400;
+    const ip = req.ip ?? "unknown";
+    if (isLoginBlocked(ip)) return bad(res, 429, "Prea multe încercări. Reîncearcă peste un minut.");
 
     const body = req.body as unknown;
     const b = (isObject(body) ? (body as LoginBody) : {}) as LoginBody;
+    const password = typeof b.password === "string" ? b.password : "";
 
-    const cityIdRaw = typeof b.cityId === "string" ? b.cityId.trim().toLowerCase() : "";
-    const pinRaw = typeof b.pin === "string" ? b.pin.trim() : "";
+    if (!password) return bad(res, 400, "Missing password");
 
-    if (!cityIdRaw) return bad(res, 400, "Missing cityId");
-    if (!pinRaw) return bad(res, 400, "Missing pin");
+    const valid = await verifyPassword(password, passwordHash);
+    if (!valid) {
+      recordLoginFailure(ip);
+      return bad(res, 401, "Parolă greșită");
+    }
+
+    clearLoginFailures(ip);
 
     const n = nowSec();
     const exp = n + ttl;
 
-    // ✅ HQ: pin matches HQ pin => global token (HQ can see all cities)
-    if (pinRaw === hqPin) {
-      const payload: ControlcenterTokenPayload = {
-        v: 1,
-        sub: "controlcenter",
-        scope: "hq",
-        iat: n,
-        exp,
-      };
-
-      const token = signControlcenterToken(secret, payload);
-
-      const out: LoginOk = {
-        ok: true,
-        token,
-        scope: "hq",
-        cityId: hqCityId,
-        exp,
-      };
-
-      res.status(200).json(out);
-      return;
-    }
-
-    // ✅ CITY: pin matches exactly for that cityId
-    const expectedCityPin = cityPins[cityIdRaw];
-    if (!expectedCityPin || expectedCityPin !== pinRaw) {
-      return bad(res, 401, "Invalid PIN");
-    }
-
     const payload: ControlcenterTokenPayload = {
       v: 1,
       sub: "controlcenter",
-      scope: "city",
-      cityId: cityIdRaw,
+      scope: "hq",
       iat: n,
       exp,
     };
 
-    const token = signControlcenterToken(secret, payload);
-
     const out: LoginOk = {
       ok: true,
-      token,
-      scope: "city",
-      cityId: cityIdRaw,
+      token: signControlcenterToken(secret, payload),
+      scope: "hq",
+      cityId: hqCityId,
       exp,
     };
 

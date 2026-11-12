@@ -28,6 +28,9 @@ type ControlcenterLoginResponse = ControlcenterLoginOk | ControlcenterLoginErr;
 // ==============================
 const STORAGE_KEY = "taxi_cc_token";
 
+/** Orașul în care intră direct operatorul după login (singurul cu flotă). */
+export const DEFAULT_CITY_ID = "baia-mare";
+
 // ==============================
 // Utils
 // ==============================
@@ -166,14 +169,11 @@ export function isControlcenterTokenExpired(payload: ControlcenterTokenPayload):
 // ==============================
 // Login
 // ==============================
-export async function loginControlcenter(
-  cityId: string,
-  pin: string,
-): Promise<ControlcenterLoginOk> {
+export async function loginControlcenter(password: string): Promise<ControlcenterLoginOk> {
   const res = await fetch("/api/auth/controlcenter/login", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ cityId, pin }),
+    body: JSON.stringify({ password }),
   });
 
   const data = (await res.json()) as unknown;

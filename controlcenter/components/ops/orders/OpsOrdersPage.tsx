@@ -16,7 +16,7 @@ import { useControlcenterTopicEvents } from "../../../lib/realtime/controlcenter
 import * as hud from "../../../styles/ops/opsHudTop.css";
 import * as t from "../../../styles/ops/opsOrders.css";
 import ThemeSwitcher from "../../ThemeSwitcher";
-import OpsPinGate from "../auth/OpsPinGate";
+import OpsLoginGate from "../auth/OpsLoginGate";
 import OpsCitySwitcher from "../cities/OpsCitySwitcher";
 
 // ==============================
@@ -570,14 +570,14 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
   // Render (AFTER hooks)
   // ------------------------------
   if (!wsEnabled) {
-    return <OpsPinGate cityId={cityId} title="CONTROL CENTER / ORDERS" />;
+    return <OpsLoginGate title="CONTROL CENTER / ORDERS" />;
   }
 
   return (
     <main className={hud.page}>
       <header className={hud.topHud} aria-label="Orders HUD">
         <div className={hud.brand}>
-          <div className={hud.brandTitle}>galant.taxi</div>
+          <div className={hud.brandTitle}>Taxi Galant</div>
           <div className={hud.pageTitle}>CONTROL CENTER / ORDERS</div>
         </div>
 

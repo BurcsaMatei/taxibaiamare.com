@@ -12,6 +12,21 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — taxi-048 (#93): autentificare simplificată, parolă unică
+
+Login-ul cu City ID + PIN (scope `hq`/`city`) înlocuit cu **o singură parolă**, verificată cu hash
+`scrypt` (`node:crypto`, fără dependențe noi) și rate limit în memorie (5 eșecuri/min per IP).
+După login (sau cu token valid), controlcenter-ul intră **direct pe `/ops/baia-mare/map`**; pagina de
+start nu mai are city picker. Motivul: accesează doar proprietarul și KonceptID, iar PIN-ul de 4 cifre
+fără rate limiting era și complicat, și slab.
+
+Tokenul HMAC și verificările WS rămân (calea `hq` exista deja); scope-ul `city` nu mai e emis.
+Env: dispar `HQ_PIN` și `CITY_PINS_JSON`, apare `TAXI_CONTROL_CENTER_PASSWORD_HASH`
+(`PASSWORD='…' npm run hash:password`). Branding UI: „Taxi Galant”, administrat de KonceptID.
+`OpsPinGate` → `OpsLoginGate`.
+
+---
+
 ## 2026-11-13 — Sincronizare documentație cu codul
 
 Audit documentație ↔ cod, fără modificări de cod. Corectat: starea reală în `CLAUDE.md`/`PRD.md`

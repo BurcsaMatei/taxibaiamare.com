@@ -63,7 +63,7 @@ Browserul **nu vorbește direct** cu Express pe HTTP — trece prin proxy-urile 
 
 | Metodă | Rută | Note |
 | --- | --- | --- |
-| POST | `/auth/controlcenter/login` | PIN → token HMAC |
+| POST | `/auth/controlcenter/login` | `{ password }` → token HMAC `hq`; rate limit 5 eșecuri/min per IP |
 | GET | `/cities` · `/cities/:cityId` | necesită Bearer token |
 | GET | `/health` | — |
 | POST | `/orders` | creează + dispecerizează sincron |
@@ -93,10 +93,12 @@ Toate citesc `TAXI_API_BASE_URL` prin același pattern `readEnv` / `apiBaseUrl()
 
 ## 4. Autentificare și autorizare
 
-- **PIN** (per oraș sau HQ) → `POST /auth/controlcenter/login` → **token HMAC custom, nu JWT**,
-  purtând un scope: `hq` | `city`.
-- Scope-ul guvernează și **abonarea pe topicuri WS**, nu doar accesul HTTP. Un operator `city` nu se
-  poate abona la datele altui oraș.
+- **Parolă unică** → `POST /auth/controlcenter/login` → **token HMAC custom, nu JWT**, scope `hq`.
+  Parola e verificată cu hash `scrypt` (`TAXI_CONTROL_CENTER_PASSWORD_HASH`, generat cu
+  `PASSWORD='…' npm run hash:password`); parola în clar nu trăiește în cod sau în repo. După login,
+  controlcenter-ul intră direct pe `/ops/baia-mare/map` (taxi-048 / #93).
+- Mecanismul `city` (scope pe oraș, verificări în WS și `/cities`) există încă în cod, dar **nu mai e
+  emis** de nimeni; se poate elimina la o curățare ulterioară. Tokenul rămâne necesar pentru WS.
 - Tipurile `ControlcenterTokenPayload` / `ControlcenterScope` trăiesc în `@taxi/shared/domain/auth.ts` —
   importate atât de api cât și de controlcenter, **zero duplicate** (taxi-009).
 
@@ -265,7 +267,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 | **`FleetVehicle` duplicat în 3 locuri** | Se vor desincroniza. E deja cunoscut, netracked. |
 | **Rute de scriere fără autentificare** (verificat în cod, 2026-11-13) | `POST /orders`, `PATCH /orders/:id/status`, `POST /orders/:id/call` și toate `/dev/vehicles/*` / `/dev/fleet/*` sunt deschise; doar `/cities*` și WS verifică tokenul. Se rezolvă la taxi-014 (#28), dar **înainte de deploy-ul public al API-ului** trebuie închise. |
 | **Tranziții de status nevalidate** | `PATCH /orders/:id/status` ia `from`/`to` de la client și le emite ca atare — nu există mașină de stări în API. → taxi-012 (#26) |
-| **Login PIN fără rate limiting** | PIN de 4 cifre = 10.000 de combinații, fără limitare de încercări. Acoperit doar de taxi-042 (#56, P3) — de mutat înaintea deploy-ului public al API-ului. |
+| **Rate limit de login doar în memorie** | Rezolvat parțial la taxi-048 (5 eșecuri/min per IP, în memorie; în spatele proxy-ului Next, IP-ul e al proxy-ului, deci limita e efectiv globală). Restul hardening-ului → taxi-042 (#56) — de mutat înaintea deploy-ului public al API-ului. |
 | **`npm audit --omit=dev`: 11 vulnerabilități** (2 critical, 5 high), 2026-11-13 | Neanalizat dacă sunt în cod activ. De triat la următorul sweep de securitate. |
 
 ### 11.2 Ce lipsește
