@@ -18,6 +18,7 @@
     "dev:controlcenter": "npm -w controlcenter run dev",
     "sim:fleet": "tsx scripts/dev-simulate-fleet.ts",
     "hash:password": "tsx scripts/hash-password.ts",
+    "dev:all": "node scripts/dev-all.mjs",
     "tree": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1",
     "tree:control": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1 -Root controlcenter",
     "tree:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1 -Root api"
