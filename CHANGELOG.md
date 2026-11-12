@@ -12,6 +12,20 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — Sincronizare documentație cu codul
+
+Audit documentație ↔ cod, fără modificări de cod. Corectat: starea reală în `CLAUDE.md`/`PRD.md`
+(ultimul commit de produs 2026-07-03, de atunci doar mentenanță de dependențe), `OpsOrdersPage.tsx` are
+747 linii (nu „400+"), `docs/konceptid-taxi.md` pe Next 16 / React 19, contradicția dintre `ROADMAP.md`
+și `ARCHITECTURE.md` despre locul build config-ului Vercel (corect: `controlcenter/vercel.json`).
+Adăugate în `ARCHITECTURE.md` §11 riscurile verificate în cod și absente până acum: rute de scriere
+fără auth, tranziții de status nevalidate, login PIN fără rate limiting, `npm audit` (11 vulnerabilități),
+plus lipsa issue-urilor pentru deploy API și comandă manuală din controlcenter.
+Alegerea furnizorului de persistență (inițial Supabase) e în discuție — documentele nu au fost modificate
+pe acest punct.
+
+---
+
 ## 2026-09-05 — Val 3.9: ESLint 8 → 9, flat config
 
 Task de portofoliu (`konceptid-ops`, Val 3.9). **`eslint` 8.57.1 → 9.x**, `.eslintrc.cjs` +

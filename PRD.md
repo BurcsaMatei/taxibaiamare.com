@@ -3,7 +3,7 @@
 **Product Requirements Document.** Ce construim, pentru cine, ce trebuie să facă produsul.
 Pentru tehnic → [`ARCHITECTURE.md`](./ARCHITECTURE.md). Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 
-**Ultima actualizare:** 2026-09-02
+**Ultima actualizare:** 2026-11-13
 
 ---
 
@@ -96,7 +96,7 @@ Acestea sunt cerințe de produs neîndeplinite, nu idei:
 
 ---
 
-## 5. Starea reală a produsului (2026-09-02)
+## 5. Starea reală a produsului (2026-11-13)
 
 Onest, verificat în cod — nu ce ar trebui să fie:
 
@@ -108,9 +108,9 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 
 - **Nu există persistență.** Un restart de server sau un refresh înseamnă pierderea tuturor comenzilor.
   Acesta e blocantul numărul unu al întregului produs.
-- **Pagina de comenzi e construită dar nemontată.** `OpsOrdersPage.tsx` (peste 400 de linii, funcțional)
+- **Pagina de comenzi e construită dar nemontată.** `OpsOrdersPage.tsx` (747 de linii, funcțional)
   nu e importată nicăieri; ruta `/ops/[cityId]/orders` afișează în schimb harta. Verificat în cod la
-  2026-09-02. → taxi-017 (#31)
+  2026-11-13. → taxi-017 (#31)
 - **API-ul nu e deployat.** `api.taxibaiamare.com` nu răspunde (verificat: fără DNS/serviciu).
   Consecință: **pe producție, login-ul eșuează controlat.** Interfața e live, dar nu are backend.
   Deployment-ul pe VPS Hetzner e în afara scopului actual.
@@ -119,7 +119,9 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 
 **Milestone atins:** M1 (2026-07-03) — Faza 0 complet închisă.
 **Milestone curent:** M2 — API persistent + controlcenter funcțional complet.
-**Activitate:** ultimul commit de cod la 2026-07-03; proiectul e în pauză de ~2 luni. 34 issues deschise.
+**Activitate:** ultimul commit de produs la 2026-07-03. Din iulie până în octombrie 2026 (ultimul commit:
+2026-10-03) doar mentenanță de dependențe (Next 15→16, React 18→19, ESLint 8→9, politică no-console).
+Niciun issue din M2 nu e început. 34 issues deschise (19 P1, 9 P2, 6 P3).
 
 ---
 

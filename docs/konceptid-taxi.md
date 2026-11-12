@@ -55,9 +55,9 @@ Body:
 Fără labels GitHub. Prioritatea trăiește în titlu.
 
 ## Stack fix
-- Next.js 15 Pages Router
+- Next.js 16 Pages Router (build cu `--webpack`)
 - TypeScript strict
-- React 18
+- React 19
 - Vanilla Extract — singurul sistem de styling permis
 - WebSocket (ws) pentru realtime
 - Mapbox pentru hartă

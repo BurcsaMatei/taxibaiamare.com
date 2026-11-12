@@ -41,8 +41,10 @@ Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user �
 
 ## Starea în trei rânduri
 
-**M1 atins** (2026-07-03). Milestone curent **M2** — API persistent + controlcenter complet.
-Punct de intrare: **taxi-011 (#25), Supabase**. 34 issues deschise. Ultimul commit de cod: 2026-07-03.
+**M1 atins** (2026-07-03). Milestone curent **M2** — API persistent + controlcenter complet, **neînceput**.
+Punct de intrare: **taxi-011 (#25)** — alegerea furnizorului de persistență e în discuție (Supabase era
+decizia inițială). 34 issues deschise. Ultimul commit de **produs**: 2026-07-03; de atunci doar
+mentenanță de dependențe (Next 16, React 19, ESLint 9; ultimul commit 2026-10-03).
 **Nu există persistență** (refresh = totul pierdut) și **API-ul nu e deployat** (login-ul eșuează
 controlat pe producție — comportament așteptat). Detalii → `PRD.md` §5.
 

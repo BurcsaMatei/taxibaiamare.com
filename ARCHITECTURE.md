@@ -4,7 +4,7 @@
 Pentru produs → [`PRD.md`](./PRD.md). Pentru esențialul de sesiune → [`CLAUDE.md`](./CLAUDE.md).
 Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 
-**Ultima actualizare:** 2026-09-02
+**Ultima actualizare:** 2026-11-13
 
 ---
 
@@ -263,12 +263,18 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
 | **Prezență in-memory cu TTL 60s** | Nu scalează peste o singură instanță de API. Două instanțe = două realități despre unde sunt vehiculele. |
 | **`FleetVehicle` duplicat în 3 locuri** | Se vor desincroniza. E deja cunoscut, netracked. |
+| **Rute de scriere fără autentificare** (verificat în cod, 2026-11-13) | `POST /orders`, `PATCH /orders/:id/status`, `POST /orders/:id/call` și toate `/dev/vehicles/*` / `/dev/fleet/*` sunt deschise; doar `/cities*` și WS verifică tokenul. Se rezolvă la taxi-014 (#28), dar **înainte de deploy-ul public al API-ului** trebuie închise. |
+| **Tranziții de status nevalidate** | `PATCH /orders/:id/status` ia `from`/`to` de la client și le emite ca atare — nu există mașină de stări în API. → taxi-012 (#26) |
+| **Login PIN fără rate limiting** | PIN de 4 cifre = 10.000 de combinații, fără limitare de încercări. Acoperit doar de taxi-042 (#56, P3) — de mutat înaintea deploy-ului public al API-ului. |
+| **`npm audit --omit=dev`: 11 vulnerabilități** (2 critical, 5 high), 2026-11-13 | Neanalizat dacă sunt în cod activ. De triat la următorul sweep de securitate. |
 
 ### 11.2 Ce lipsește
 
 - **Zero teste** în tot repo-ul. Nici unit, nici E2E. Există issues pentru asta (taxi-035 #49,
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
+- **Fără issue pentru deploy-ul API-ului pe VPS** (PRD îl declară în afara scopului) și **fără issue
+  pentru crearea/atribuirea manuală a comenzilor din controlcenter** — lipsuri de planificare, nu de cod.
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.
 - **Patru din cinci orașe au flotă zero** — comenzile acolo eșuează.
@@ -277,7 +283,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 
 | Element | Verdict |
 | --- | --- |
-| **`controlcenter/components/ops/orders/OpsOrdersPage.tsx`** | 400+ linii funcționale, **importate de nicăieri** (verificat 2026-09-02). Ruta `/ops/[cityId]/orders` afișează harta în loc. → taxi-017 (#31) |
+| **`controlcenter/components/ops/orders/OpsOrdersPage.tsx`** | 747 linii funcționale, **importate de nicăieri** (verificat 2026-11-13). Ruta `/ops/[cityId]/orders` afișează harta în loc. → taxi-017 (#31) |
 | `api/src/modules/drivers/` · `payments/` | Stub-uri goale (`export {}`) |
 | `/ops/map`, `/ops/orders` (fără `[cityId]`) | Rute deprecated → ștergere la taxi-040 (#54) |
 | `GET /dev/cities/:cityId` | Deprecated, fără auth |
