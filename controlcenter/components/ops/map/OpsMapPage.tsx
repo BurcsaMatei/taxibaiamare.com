@@ -14,7 +14,7 @@ import {
 } from "../../../lib/auth/controlcenterAuth";
 import { useControlcenterTopicEvents } from "../../../lib/realtime/controlcenterWs";
 import * as s from "../../../styles/ops/opsMap.css";
-import OpsPinGate from "../auth/OpsPinGate";
+import OpsLoginGate from "../auth/OpsLoginGate";
 import OpsCitySwitcher from "../cities/OpsCitySwitcher";
 import OpsCornerPanel from "./OpsCornerPanel";
 import OpsHud from "./OpsHud";
@@ -431,7 +431,7 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
   // Render (after hooks)
   // ==============================
   if (!wsEnabled) {
-    return <OpsPinGate cityId={cityId} title="CONTROL CENTER / MAP" />;
+    return <OpsLoginGate title="CONTROL CENTER / MAP" />;
   }
 
   return (

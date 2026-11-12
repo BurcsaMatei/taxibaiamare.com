@@ -20,7 +20,7 @@ browser → Next API proxies (controlcenter/pages/api/*) → Express :3001
                                                        → WS /ws?token=... → topic hub
 ```
 
-Auth: PIN (per oraș sau HQ) → token HMAC cu scope `hq` | `city` → autorizare pe topicuri WS.
+Auth: parolă unică (hash scrypt în env) → token HMAC `hq` → autorizare pe topicuri WS. Intrarea duce direct pe harta din Baia Mare.
 Dispatch: nearest-vehicle (Haversine), sincron la `POST /orders`.
 
 ## Pornire locală (WSL)

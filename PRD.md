@@ -45,7 +45,7 @@ prezență pe ecranul telefonului — lucruri pe care un PWA nu le oferă compar
 
 | Cerință | Stare |
 | --- | --- |
-| Autentificare cu PIN — per oraș sau HQ (acces la toate orașele) | ✅ funcțional |
+| Autentificare cu o parolă unică, direct pe harta din Baia Mare (taxi-048) | ✅ funcțional local |
 | Hartă live cu poziția vehiculelor, per oraș (Mapbox) | ✅ funcțional |
 | HUD cu starea flotei | ✅ funcțional |
 | Comutare între orașe (city switcher), pentru operatorii HQ | ✅ funcțional |
@@ -137,4 +137,5 @@ Niciun issue din M2 nu e început. 34 issues deschise (19 P1, 9 P2, 6 P3).
 
 ## 7. Proprietate
 
-Proiect KonceptID. Cod proprietar.
+Platforma **Taxi Galant**, administrată (managed) de **KonceptID**. Brandul din interfață: „Taxi Galant”.
+Cod proprietar. Utilizatori actuali ai controlcenter-ului: doar proprietarul proiectului și KonceptID.

@@ -94,7 +94,7 @@ export default function OpsHud(props: OpsHudProps): React.JSX.Element {
           <header className={hud.header}>
             <div className={hud.headerMain}>
               <div className={hud.brandRow}>
-                <div className={hud.brandTitle}>galant.taxi</div>
+                <div className={hud.brandTitle}>Taxi Galant</div>
               </div>
               <div className={hud.pageTitle}>CONTROL CENTER / MAP</div>
             </div>

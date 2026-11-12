@@ -1,4 +1,4 @@
-// controlcenter/components/ops/auth/OpsPinGate.tsx
+// controlcenter/components/ops/auth/OpsLoginGate.tsx
 
 // ==============================
 // Imports
@@ -19,18 +19,17 @@ import * as g from "../../../styles/ops/opsPinGate.css";
 // ==============================
 // Types
 // ==============================
-export type OpsPinGateProps = {
-  cityId: string;
+export type OpsLoginGateProps = {
   title: string;
 };
 
 // ==============================
 // Component
 // ==============================
-export default function OpsPinGate(props: OpsPinGateProps): React.JSX.Element {
-  const { cityId, title } = props;
+export default function OpsLoginGate(props: OpsLoginGateProps): React.JSX.Element {
+  const { title } = props;
 
-  const [pin, setPin] = React.useState<string>("");
+  const [password, setPassword] = React.useState<string>("");
   const [busy, setBusy] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>("");
 
@@ -40,17 +39,12 @@ export default function OpsPinGate(props: OpsPinGateProps): React.JSX.Element {
     [storedToken],
   );
 
-  const mismatch =
-    storedPayload?.scope === "city" && typeof storedPayload.cityId === "string"
-      ? storedPayload.cityId !== cityId
-      : false;
-
   const expired = storedPayload ? isControlcenterTokenExpired(storedPayload) : false;
 
   const onLogout = React.useCallback(() => {
     clearStoredControlcenterToken();
     setError("");
-    setPin("");
+    setPassword("");
     window.location.reload();
   }, []);
 
@@ -58,9 +52,8 @@ export default function OpsPinGate(props: OpsPinGateProps): React.JSX.Element {
     async (ev: React.FormEvent) => {
       ev.preventDefault();
 
-      const p = pin.trim();
-      if (!p) {
-        setError("Introduce PIN.");
+      if (!password) {
+        setError("Introdu parola.");
         return;
       }
 
@@ -68,53 +61,40 @@ export default function OpsPinGate(props: OpsPinGateProps): React.JSX.Element {
       setError("");
 
       try {
-        const r = await loginControlcenter(cityId, p);
+        const r = await loginControlcenter(password);
         setStoredControlcenterToken(r.token);
         window.location.reload();
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Login failed";
-        setError(msg);
+        setError(e instanceof Error ? e.message : "Login failed");
       } finally {
         setBusy(false);
       }
     },
-    [cityId, pin],
+    [password],
   );
 
   return (
-    <div className={g.overlay} role="dialog" aria-label="PIN gate">
-      <section className={`${c.card} ${g.card}`} aria-label="Control Center PIN gate">
+    <div className={g.overlay} role="dialog" aria-label="Login gate">
+      <section className={`${c.card} ${g.card}`} aria-label="Control Center login">
         <h1 className={c.title}>{title}</h1>
-
-        <p className={c.subtitle}>
-          City: <span className={c.mono}>{cityId}</span>
-        </p>
-
-        {mismatch ? (
-          <div className={g.warn} role="status" aria-live="polite">
-            Token-ul curent este pentru city <b>{storedPayload?.cityId}</b>. Pentru acest oraș
-            trebuie login din nou.
-          </div>
-        ) : null}
 
         {expired ? (
           <div className={g.warn} role="status" aria-live="polite">
-            Token expirat. Fă login din nou.
+            Sesiune expirată. Autentifică-te din nou.
           </div>
         ) : null}
 
-        <form className={c.form} onSubmit={onSubmit} aria-label="PIN form">
-          <label className={c.label} htmlFor="pin">
-            PIN
+        <form className={c.form} onSubmit={onSubmit} aria-label="Login form">
+          <label className={c.label} htmlFor="password">
+            Parolă
           </label>
           <input
-            id="pin"
+            id="password"
             className={c.input}
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            placeholder="ex: 1234"
-            inputMode="numeric"
-            autoComplete="off"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
           <button className={c.btn} type="submit" disabled={busy}>
             {busy ? "Se verifică…" : "Intră"}
@@ -129,7 +109,7 @@ export default function OpsPinGate(props: OpsPinGateProps): React.JSX.Element {
 
         <div className={g.actions}>
           <button className={g.linkBtn} type="button" onClick={onLogout}>
-            Logout (șterge token)
+            Logout (șterge sesiunea)
           </button>
         </div>
       </section>
