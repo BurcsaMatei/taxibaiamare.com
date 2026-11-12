@@ -12,6 +12,19 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — Reorientare: scop redus la controlcenter + API + persistență + deploy
+
+Decizie luată împreună cu proprietarul proiectului: planul inițial (user React Native, driver, admin,
+landing, pricing, payments) depășea mult ce există în cod și nu producea valoare utilizabilă. **21 de
+issue-uri parcate** (titlu `[PARCAT]`, rămân deschise, nimic șters); `ROADMAP.md` are acum §2
+„Reorientare” cu scopul activ. Issue-uri noi: taxi-049 (#95) deploy API pe VPS, taxi-050 (#96) comandă
+manuală din controlcenter. Furnizorul de persistență (Supabase vs. Neon + Blob) e în discuție.
+taxi-048 (#93) a fost integrat în `main` prin PR #94 (squash). Brand: **Taxi Galant**, administrat de
+KonceptID. Local: `npm run dev:all` pornește API + controlcenter. CI-ul GitHub încă nu pornește
+(blocaj de facturare); verificarea reală rămâne Vercel Preview.
+
+---
+
 ## 2026-11-13 — taxi-048 (#93): autentificare simplificată, parolă unică
 
 Login-ul cu City ID + PIN (scope `hq`/`city`) înlocuit cu **o singură parolă**, verificată cu hash

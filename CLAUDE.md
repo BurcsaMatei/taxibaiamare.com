@@ -24,8 +24,9 @@ actualizezi documentația în același PR.
 
 ## Ce este proiectul
 
-Platformă de taxi multi-oraș (BOLT-like) pentru România. Monorepo npm cu patru suprafețe planificate;
-**doar dispeceratul există.**
+Platformă de taxi multi-oraș (BOLT-like) pentru România — brand **Taxi Galant**, administrată de
+**KonceptID**. Monorepo npm cu patru suprafețe planificate; **doar dispeceratul există**, iar
+user/driver/admin/landing sunt **parcate** (vezi `ROADMAP.md` §2).
 
 ```
 api/               Express 5 + WS (:3001)          — funcțional local, NEDEPLOYAT
@@ -41,12 +42,14 @@ Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user �
 
 ## Starea în trei rânduri
 
-**M1 atins** (2026-07-03). Milestone curent **M2** — API persistent + controlcenter complet, **neînceput**.
-Punct de intrare: **taxi-011 (#25)** — alegerea furnizorului de persistență e în discuție (Supabase era
-decizia inițială). 34 issues deschise. Ultimul commit de **produs**: 2026-07-03; de atunci doar
-mentenanță de dependențe (Next 16, React 19, ESLint 9; ultimul commit 2026-10-03).
+**M1 atins** (2026-07-03). **Reorientare 2026-11-13:** scop activ = controlcenter + API + persistență +
+deploy; restul parcat (21 issues `[PARCAT]`). Milestone curent **M2** (revizuit), în curs.
+**Livrat 2026-11-13:** taxi-048 (#93) — login cu **o singură parolă** (hash scrypt în env), direct pe
+`/ops/baia-mare/map`; fără PIN/City ID. Următorii: **#31** (pagina de comenzi), apoi persistența
+(**furnizorul e în discuție:** Neon + Blob în loc de Supabase) și **#95** (deploy API). 34 issues
+deschise: 13 active (+ #95, #96 noi), 21 parcate.
 **Nu există persistență** (refresh = totul pierdut) și **API-ul nu e deployat** (login-ul eșuează
-controlat pe producție — comportament așteptat). Detalii → `PRD.md` §5.
+controlat pe producție — „Auth proxy error”, comportament așteptat până la #95). Detalii → `PRD.md` §5.
 
 ---
 
@@ -123,7 +126,9 @@ Orice eveniment realtime nou se înregistrează și în `api/src/modules/realtim
 ## Comenzi
 
 ```bash
-npm -w packages/shared run build                  # OBLIGATORIU primul
+npm run dev:all                                   # TOT local dintr-o comandă: build shared+api, apoi API :3001 + controlcenter :3000 (Ctrl+C = oprește ambele)
+PASSWORD='…' npm run hash:password                # generează TAXI_CONTROL_CENTER_PASSWORD_HASH pentru api/.env.local
+npm -w packages/shared run build                  # OBLIGATORIU primul (dacă pornești manual)
 npm -w api run build
 node --env-file=api/.env.local api/dist/index.js  # :3001 — API-ul nu încarcă singur .env.local
 npm run dev:controlcenter                         # :3000

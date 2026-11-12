@@ -21,6 +21,10 @@ Obiectivul declarat: scalare națională, pornind de la Baia Mare.
 
 ## 2. Pentru cine — cele patru suprafețe
 
+> **Reorientare 2026-11-13:** doar controlcenter-ul e activ. User, driver și landing (și admin) sunt
+> **parcate** — rămân în viziune, dar nu se construiesc până nu e livrat și validat dispeceratul
+> (vezi `ROADMAP.md` §2).
+
 Produsul e format din patru aplicații distincte, cu utilizatori diferiți. **Ordinea de construcție e
 decisă și fixă:** controlcenter → landing → user → driver → payments.
 
@@ -51,7 +55,7 @@ prezență pe ecranul telefonului — lucruri pe care un PWA nu le oferă compar
 | Comutare între orașe (city switcher), pentru operatorii HQ | ✅ funcțional |
 | Actualizare în timp real, cu reconectare automată la pierderea conexiunii | ✅ funcțional |
 | **Pagina de comenzi — listă, filtrare, acțiuni** | ❌ **construită dar nemontată** (vezi §5) |
-| Atribuire manuală a unei comenzi către un vehicul | ❌ nu există |
+| Creare + atribuire manuală a unei comenzi către un vehicul | ❌ nu există → taxi-050 (#96) |
 
 ### 3.2 Reguli de business stabilite
 
@@ -113,7 +117,7 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
   2026-11-13. → taxi-017 (#31)
 - **API-ul nu e deployat.** `api.taxibaiamare.com` nu răspunde (verificat: fără DNS/serviciu).
   Consecință: **pe producție, login-ul eșuează controlat.** Interfața e live, dar nu are backend.
-  Deployment-ul pe VPS Hetzner e în afara scopului actual.
+  Deployment-ul pe VPS Hetzner e acum **în scop** → taxi-049 (#95).
 - Modulele `drivers` și `payments` sunt stub-uri goale (`export {}`).
 - Zero teste în tot repo-ul.
 

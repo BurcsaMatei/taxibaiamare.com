@@ -9,7 +9,36 @@ Cum se folosește:
 - **Ordinea e dictată exclusiv de dependențe, nu de preferințe.** Un issue nu se începe dacă are dependențe nemergeuite. Dacă două issues nu se blochează reciproc, pot rula în paralel.
 - Convenție numerotare: `#nr GitHub = taxi-XXX + 14` (taxi-001 = #15 … taxi-045 = #59).
 
-## 2. Drumul critic (P1)
+## 2. Reorientare (2026-11-13)
+
+Planul inițial (M2→M4) presupunea trei aplicații noi (user React Native, driver, admin) peste un API
+fără persistență. Din iulie 2026 nu s-a mai livrat nimic pe produs, iar complexitatea planificată depășea
+ce există în cod. **Decizie: ne concentrăm pe ce aduce valoare reală — un controlcenter operațional,
+cu API deployat și date persistente — și parcăm restul.** Nu se șterge nimic; issue-urile parcate au
+titlul `[PARCAT]` și rămân deschise.
+
+**Scop activ:** controlcenter + API + persistență + deploy.
+
+| Grup | Issue-uri active |
+|---|---|
+| Acces | ✅ taxi-048 (#93) parolă unică, direct pe hartă |
+| Dispecerat | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), **taxi-050 (#96)** comandă manuală |
+| Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizorul e în discuție (Neon + Blob în loc de Supabase) |
+| Siguranță | taxi-014 (#28) auth pe scriere, taxi-035 (#49) teste, taxi-042 (#56) hardening |
+| Live | **taxi-049 (#95)** deploy API pe VPS + env producție |
+| Igienă | taxi-040 (#54), taxi-041 (#55) |
+
+**Parcate (`[PARCAT]`, 21 issue-uri):** user app + auth user (taxi-020…026, #34–#40), driver + dispatch
+cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), seed multi-oraș (taxi-036,
+#50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
+(taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
+
+Ordinea recomandată: **#31 → (furnizor persistență) → #25/#26/#27/#28 → #95 → #96**, cu #49 și #56
+în paralel și obligatoriu înainte de expunerea publică a API-ului.
+
+---
+
+## 3. Drumul critic (P1) — plan inițial, parțial parcat
 
 Secvența P1 în ordinea de execuție. Săgețile arată dependența directă; itemii de pe același rând pot rula în paralel.
 
@@ -34,7 +63,7 @@ taxi-001 + taxi-002 + taxi-003 ──→ taxi-044 (#58) Vercel + domeniu (ramur�
 
 Lanțul cel mai lung (long pole): **001 → 003 → 011 → 020 → 027 → 028 → 031 → 032 → 034** — orice întârziere aici întârzie tot MVP-ul. Track-ul user (022 → 023 → 024) și track-ul driver (029 → 030) se execută în paralel cu el.
 
-## 3. Faze
+## 4. Faze
 
 ### Faza 0 — Igienă & securitate
 Scop: repo sigur, CI real, tooling care rulează pe WSL.
@@ -49,6 +78,7 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 | 3 | ✅ 2026-07-02 — taxi-044 Setup Vercel + domeniu — **LIVE pe `ops.taxibaiamare.com`** (varianta A: doar controlcenter; build config în `controlcenter/vercel.json` cu `cd /vercel/path0`, Build Command Override OFF în dashboard — vezi `ARCHITECTURE.md` §10; proiectele user/driver/admin la scaffold-ul lor) | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |
 | 3 | ✅ 2026-07-03 — taxi-006 README root | #20 | P3 | infra | — |
 | 3 | ✅ 2026-07-03 — taxi-007 Eliminare next-pwa@0.0.1 | #21 | P3 | controlcenter | — |
+| — | ✅ 2026-11-13 — taxi-048 Autentificare simplificată: parolă unică (scrypt) → direct pe hartă; branding Taxi Galant | #93 | P1 | api/controlcenter | — |
 
 Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând; 044 după 001+002+003.
 Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
@@ -68,7 +98,7 @@ Scop: contractele din `@taxi/shared` devin reale și complete înainte de a cons
 Paralel: 008 ∥ 009; faza întreagă poate rula în paralel cu Faza 0.
 Deblochează: taxi-012 (persistare pe contracte corecte), taxi-014, taxi-028, taxi-035.
 
-### Faza 2 — Persistență Supabase
+### Faza 2 — Persistență (furnizor în discuție: Supabase inițial; se evaluează Neon + Blob)
 Scop: platforma capătă memorie — comenzi, orașe și flotă în DB.
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
@@ -95,7 +125,7 @@ Scop: dispeceratul devine operațional — două pagini distincte, date care sup
 Paralel: 017 poate începe imediat (zero dependențe — milestone-ul curent); 018 ∥ 019 după 013.
 Deblochează: taxi-034 (E2E), taxi-040 (cleanup rute deprecated).
 
-### Faza 4 — Auth multi-subiect + aplicația user
+### Faza 4 — Auth multi-subiect + aplicația user — ⏸ PARCATĂ
 Scop: clientul există — se autentifică, comandă și își urmărește cursa live.
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
@@ -111,7 +141,7 @@ Scop: clientul există — se autentifică, comandă și își urmărește cursa
 Paralel: 020 ∥ 022; după 023 → 024 ∥ 025 ∥ 026.
 Deblochează: driver auth (taxi-027 cere pattern-ul din 020), locație reală driver (taxi-030 cere 021), E2E user-side.
 
-### Faza 5 — Aplicația driver
+### Faza 5 — Aplicația driver — ⏸ PARCATĂ
 Scop: șoferul există — primește oferte, acceptă și conduce cursa prin toate stările.
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
@@ -131,7 +161,7 @@ Notă: taxi-043 a fost deschis ulterior, dar aparține logic acestei faze — ca
 Notă 045: introduce suprafața nouă `admin/` (a cincea suprafață web, admin.domeniu.ro) — interfața prin care flota (indicative `{CITY_CODE}{NR}`, poze, asocieri șofer–vehicul) se administrează fără acces direct la DB; pregătește auth-ul driver pe telefon (027) și cardul cursei (024/043).
 Deblochează: taxi-034 (E2E complet), taxi-036 (seed cu driveri).
 
-### Faza 6 — E2E & QA
+### Faza 6 — E2E & QA — ⏸ parțial parcată (taxi-035 rămâne activ; taxi-034/036 parcate)
 Scop: „testabil complet” devine o comandă care rulează repetat, nu o afirmație.
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
@@ -143,7 +173,7 @@ Scop: „testabil complet” devine o comandă care rulează repetat, nu o afirm
 Paralel: toate trei independente între ele; 035 poate rula mult mai devreme (doar 008 o blochează).
 Deblochează: MVP declarat testabil (M4).
 
-### Post-MVP (P3)
+### Post-MVP (P3) — taxi-037/038/039 parcate; taxi-040/041/042 active
 Scop: extindere după validarea buclei principale.
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
@@ -157,7 +187,7 @@ Scop: extindere după validarea buclei principale.
 
 Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs, landing (037) precede user/driver ca prioritate de business, dar tehnic nu blochează nimic.
 
-## 4. Matrice de dependențe
+## 5. Matrice de dependențe
 
 | Issue | # | E blocat de | Blochează |
 |---|---|---|---|
@@ -208,28 +238,31 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-045 | #59 | 011, 027 | — |
 | taxi-046 | #76 | 008 | — |
 | taxi-047 | #77 | — | — |
+| taxi-048 | #93 | — | — |
+| taxi-049 | #95 | 014 | — |
+| taxi-050 | #96 | 012, 014, 017 | — |
 
-## 5. Milestone-uri
+## 6. Milestone-uri
 
 **M1 — Repo sigur + CI verde — ✅ ATINS 2026-07-03**
 Închise: toată Faza 0 (taxi-001…007, taxi-044) + taxi-047 (CI pe Node 22).
 Validare: secretele rotite și netracked, CI rulează pe PR și e verde (Node 22, aliniat cu producția), simulatorul de flotă merge pe WSL, controlcenter LIVE pe ops.taxibaiamare.com.
 
-**M2 — API persistent + controlcenter funcțional complet**
+**M2 — API persistent + controlcenter funcțional complet + API deployat (revizuit 2026-11-13: include taxi-049 și taxi-050)**
 Închise: taxi-008…taxi-019 (#22–#33).
 Validare: comandă creată cu curl autentificat → vizibilă în DB, în pagina de comenzi și pe hartă (markeri galben/roșu); refresh nu pierde nimic; tranziții invalide respinse.
 
-**M3 — User app testabilă end-to-end**
+**M3 — User app testabilă end-to-end — ⏸ PARCAT**
 Închise: taxi-020…taxi-026 (#34–#40).
 Validare: un client real se loghează cu OTP, comandă din UI, vede statusul și mașina live pe hartă; controlcenter vede comanda simultan.
 
-**M4 — Driver app testabilă + flux complet user→driver→controlcenter**
+**M4 — Driver app testabilă + flux complet user→driver→controlcenter — ⏸ PARCAT**
 Închise: taxi-027…taxi-034 (#41–#48) + taxi-043 (#57).
 Validare: `npm run e2e:happy` verde — user comandă, driverul primește oferta, acceptă, execută cursa până la COMPLETED, clientul vede cardul complet al cursei (indicativ, mașină, poze, preț), controlcenter vede totul live pe ambele pagini.
 
 După M4, produsul e MVP testabil complet. Post-MVP (037–042) se prioritizează separat.
 
-## 6. Reguli de actualizare
+## 7. Reguli de actualizare
 
 - **La fiecare merge de issue:** marchează itemul în acest fișier (strikethrough sau ✅ + data), în același PR care actualizează CLAUDE.md. Niciun issue nu e închis fără ambele actualizări.
 - **La decizii arhitecturale noi** (provider nou, schimbare de flux, issue nou/anulat): actualizează faza afectată, matricea de dependențe și, dacă e cazul, drumul critic — în PR-ul care implementează decizia sau într-un PR `docs:` dedicat.

@@ -19,7 +19,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
 | Runtime | **Node 22.x** (`controlcenter/.nvmrc`, `engines`, CI, Vercel — aliniate) |
-| Persistență | **niciuna încă** — decisă Supabase, neimplementată |
+| Persistență | **niciuna încă** — furnizor în discuție (Supabase inițial; se evaluează Neon Postgres + Vercel Blob) |
 | Aplicație user (viitor) | React Native — nativ iOS + Android |
 
 ---
@@ -31,8 +31,8 @@ api/               backend central — Express 5 + WS (:3001)
 controlcenter/     dispecerat — Next.js 16 (:3000)          ← singura suprafață live
 packages/shared/   @taxi/shared  — SURSĂ UNICĂ DE ADEVĂR pentru domeniu
 packages/tokens/   @taxi/tokens  — design tokens (light/dark)
-user/              REZERVAT — nu există pe disc. React Native, nativ.
-driver/            REZERVAT — nu există pe disc.
+user/              REZERVAT, PARCAT — nu există pe disc. React Native, nativ.
+driver/            REZERVAT, PARCAT — nu există pe disc.
 scripts/           utilitare dev (simulator flotă, tree)
 docs/              konceptid-taxi.md — workflow de colaborare
 ```
@@ -240,7 +240,7 @@ reintroduce doar dacă devine cerință (probabil pentru driver).
 ### API → VPS Hetzner (NEDEPLOYAT)
 
 **Express + WebSocket nu merg pe Vercel** — conexiuni persistente, nu serverless. Destinația e un VPS
-Hetzner pe `api.taxibaiamare.com`.
+Hetzner pe `api.taxibaiamare.com`. **În scop activ → taxi-049 (#95).**
 
 **Verificat 2026-09-02: domeniul nu răspunde.** Consecință directă: **pe producție, login-ul eșuează
 controlat.** Interfața e live, dar fără backend. Comportament așteptat, nu defect.
@@ -275,8 +275,8 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 - **Zero teste** în tot repo-ul. Nici unit, nici E2E. Există issues pentru asta (taxi-035 #49,
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
-- **Fără issue pentru deploy-ul API-ului pe VPS** (PRD îl declară în afara scopului) și **fără issue
-  pentru crearea/atribuirea manuală a comenzilor din controlcenter** — lipsuri de planificare, nu de cod.
+- **Deploy API pe VPS** → taxi-049 (#95) și **creare/atribuire manuală de comenzi din controlcenter**
+  → taxi-050 (#96): issue-uri deschise 2026-11-13, neînceput.
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.
 - **Patru din cinci orașe au flotă zero** — comenzile acolo eșuează.
