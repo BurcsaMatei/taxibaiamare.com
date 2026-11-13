@@ -68,14 +68,6 @@ export function fmtAge(nowMs: number, iso: string): string {
   return `${d}d`;
 }
 
-export function toTelHref(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) return "";
-  const cleaned = trimmed.replace(/[^\d+]/g, "");
-  if (!cleaned) return "";
-  return `tel:${cleaned}`;
-}
-
 export function normalizeIndicativInput(raw: string): string {
   const s2 = raw.trim();
   if (!s2) return "";

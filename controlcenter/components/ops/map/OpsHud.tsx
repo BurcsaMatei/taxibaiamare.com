@@ -24,8 +24,6 @@ export type OpsHudProps = {
   lastError: string | null;
 
   cityId: string;
-  dispatchPhone: string | null;
-  dispatchHref: string | null;
 
   topic: string;
 
@@ -56,8 +54,6 @@ export default function OpsHud(props: OpsHudProps): React.JSX.Element {
     ready,
     lastError,
     cityId,
-    dispatchPhone,
-    dispatchHref,
     topic,
     onlineCount,
     offlineCount,
@@ -132,15 +128,6 @@ export default function OpsHud(props: OpsHudProps): React.JSX.Element {
                   <div className={hud.k}>City</div>
                   <div className={hud.vMono}>{cityId}</div>
                 </div>
-
-                {dispatchPhone && dispatchHref ? (
-                  <div className={hud.kv}>
-                    <div className={hud.k}>Dispatch</div>
-                    <a className={hud.vLinkMono} href={dispatchHref}>
-                      {dispatchPhone}
-                    </a>
-                  </div>
-                ) : null}
 
                 {mapOk ? (
                   <div className={hud.kv}>

@@ -21,6 +21,15 @@ contul Mapbox, nu în cod.
 
 ---
 
+## 2026-11-13 — taxi-054 (#103): scoate numărul de telefon din HUD-ul hărții
+
+Rândul „Dispatch” (numărul orașului, link `tel:`) din panoul Status al hărții a fost scos, împreună cu
+starea și helperul `toTelHref` rămase nefolosite. Câmpul `dispatchPhone` rămâne în `CityPublic`/API
+(aplicația de client va avea nevoie de el), iar pagina de comenzi afișează în continuare
+`order.userCalledDispatch`.
+
+---
+
 ## 2026-11-13 — Clarificare: controlcenter-ul doar observă; telefonul nu e parte din produs
 
 Corecție de plan, la cererea proprietarului: am presupus greșit (fără confirmare) că dispeceratul introduce
