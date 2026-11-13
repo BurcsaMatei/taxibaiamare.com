@@ -12,6 +12,16 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — taxi-051 (#97): token obligatoriu pe toate rutele API
+
+Pregătire pentru deploy-ul public (#95): `requireAuth` pe tot ce e după login; `/health` și login
+rămân publice. Înainte, `POST /orders`, `PATCH /orders/:id/status` și `/dev/*` erau deschise oricui.
+Proxy-ul Next `/api/fleet/[cityId]` și clientul de hartă trimit acum tokenul; simulatorul de flotă
+se autentifică (`PASSWORD='…' npm run sim:fleet`, sau `TAXI_API_TOKEN`). Acoperă esențialul din
+taxi-014 (#28); tenant check-ul pe oraș din #28 devine obsolet (scope-ul `city` nu mai e emis).
+
+---
+
 ## 2026-11-13 — Reorientare: scop redus la controlcenter + API + persistență + deploy
 
 Decizie luată împreună cu proprietarul proiectului: planul inițial (user React Native, driver, admin,

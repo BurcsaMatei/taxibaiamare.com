@@ -1,4 +1,4 @@
-﻿// api/src/index.ts
+// api/src/index.ts
 
 // ==============================
 // Imports
@@ -7,7 +7,7 @@ import http from "node:http";
 import express from "express";
 import type { OrderStatus } from "@taxi/shared";
 
-import { registerAuthModule } from "./modules/auth/index.js";
+import { registerAuthModule, requireAuth } from "./modules/auth/index.js";
 import { registerCitiesModule } from "./modules/cities/index.js";
 import { registerOrdersModule } from "./modules/orders/index.js";
 import { createRealtimeHub } from "./modules/realtime/wsServer.js";
@@ -39,6 +39,10 @@ const hub = createRealtimeHub();
 // Modules
 // ==============================
 registerAuthModule(app);
+
+// Tot ce e înregistrat mai jos cere token (login și /health rămân publice).
+app.use(requireAuth);
+
 registerCitiesModule(app);
 registerOrdersModule(app, hub);
 registerVehiclesModule(app, hub);

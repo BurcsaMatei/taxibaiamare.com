@@ -61,6 +61,10 @@ Browserul **nu vorbește direct** cu Express pe HTTP — trece prin proxy-urile 
 
 ### 3.1 Endpoints API (Express)
 
+> **Autentificare (taxi-051 / #97):** toate rutele de mai jos cer `Authorization: Bearer <token>`,
+> **în afară de `GET /health` și `POST /auth/controlcenter/login`**. Middleware-ul `requireAuth` din
+> `api/src/modules/auth/index.ts` se aplică tuturor modulelor înregistrate după login.
+
 | Metodă | Rută | Note |
 | --- | --- | --- |
 | POST | `/auth/controlcenter/login` | `{ password }` → token HMAC `hq`; rate limit 5 eșecuri/min per IP |
@@ -196,7 +200,7 @@ node --env-file=api/.env.local api/dist/index.js      # :3001
 
 npm run dev:controlcenter                              # next dev :3000
 
-npm run sim:fleet -- --city baia-mare --count 20       # simulator flotă (tsx); Ctrl+C = offline
+PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă (tsx, cere parola); Ctrl+C = offline
 npm run typecheck                                      # toate workspace-urile
 npm -w controlcenter run lint
 npm -w controlcenter run check:all                     # format:check + typecheck + lint
@@ -265,7 +269,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
 | **Prezență in-memory cu TTL 60s** | Nu scalează peste o singură instanță de API. Două instanțe = două realități despre unde sunt vehiculele. |
 | **`FleetVehicle` duplicat în 3 locuri** | Se vor desincroniza. E deja cunoscut, netracked. |
-| **Rute de scriere fără autentificare** (verificat în cod, 2026-11-13) | `POST /orders`, `PATCH /orders/:id/status`, `POST /orders/:id/call` și toate `/dev/vehicles/*` / `/dev/fleet/*` sunt deschise; doar `/cities*` și WS verifică tokenul. Se rezolvă la taxi-014 (#28), dar **înainte de deploy-ul public al API-ului** trebuie închise. |
+| ~~Rute de scriere fără autentificare~~ — **rezolvat** (taxi-051 / #97, 2026-11-13) | Token obligatoriu pe toate rutele, în afară de `/health` și login. Verificat: fără token / token fals → 401 pe `/orders`, `/dev/*`. |
 | **Tranziții de status nevalidate** | `PATCH /orders/:id/status` ia `from`/`to` de la client și le emite ca atare — nu există mașină de stări în API. → taxi-012 (#26) |
 | **Rate limit de login doar în memorie** | Rezolvat parțial la taxi-048 (5 eșecuri/min per IP, în memorie; în spatele proxy-ului Next, IP-ul e al proxy-ului, deci limita e efectiv globală). Restul hardening-ului → taxi-042 (#56) — de mutat înaintea deploy-ului public al API-ului. |
 | **`npm audit --omit=dev`: 11 vulnerabilități** (2 critical, 5 high), 2026-11-13 | Neanalizat dacă sunt în cod activ. De triat la următorul sweep de securitate. |

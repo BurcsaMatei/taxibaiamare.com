@@ -44,7 +44,7 @@ Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user �
 
 **M1 atins** (2026-07-03). **Reorientare 2026-11-13:** scop activ = controlcenter + API + persistență +
 deploy; restul parcat (21 issues `[PARCAT]`). Milestone curent **M2** (revizuit), în curs.
-**Livrat 2026-11-13:** taxi-048 (#93) — login cu **o singură parolă** (hash scrypt în env), direct pe
+**Livrat 2026-11-13:** taxi-051 (#97) — token obligatoriu pe toate rutele API (simulatorul cere `PASSWORD`); taxi-048 (#93) — login cu **o singură parolă** (hash scrypt în env), direct pe
 `/ops/baia-mare/map`; fără PIN/City ID. Următorii: **#31** (pagina de comenzi), apoi persistența
 (**furnizorul e în discuție:** Neon + Blob în loc de Supabase) și **#95** (deploy API). 34 issues
 deschise: 13 active (+ #95, #96 noi), 21 parcate.
@@ -132,7 +132,7 @@ npm -w packages/shared run build                  # OBLIGATORIU primul (dacă po
 npm -w api run build
 node --env-file=api/.env.local api/dist/index.js  # :3001 — API-ul nu încarcă singur .env.local
 npm run dev:controlcenter                         # :3000
-npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă; Ctrl+C = offline
+PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă (cere parola controlcenter); Ctrl+C = offline
 npm run typecheck                                 # toate workspace-urile
 npm -w controlcenter run check:all                # format:check + typecheck + lint
 ```
