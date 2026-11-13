@@ -4,7 +4,9 @@
 // PATCH /dev/vehicles/:id/location pe o traiectorie circulară cu wobble (port al vechiului
 // dev-simulate-fleet.ps1). La Ctrl+C trimite PATCH /dev/vehicles/:id/offline (best-effort).
 //
-// Rulare: npm run sim:fleet -- --city baia-mare --count 20 --interval 800
+// Rulare: PASSWORD='parola' npm run sim:fleet -- --city baia-mare --count 20 --interval 800
+// (API-ul cere token pe aceste rute: simulatorul se loghează cu PASSWORD, parola controlcenter-ului.
+//  Alternativ: TAXI_API_TOKEN cu un token deja emis.)
 
 // ==============================
 // Types
@@ -90,12 +92,44 @@ function sleep(ms: number): Promise<void> {
 }
 
 // ==============================
+// Auth
+// ==============================
+let authHeaders: Record<string, string> = {};
+
+async function authenticate(baseUrl: string): Promise<boolean> {
+  const preset = (process.env.TAXI_API_TOKEN ?? "").trim();
+  if (preset) {
+    authHeaders = { authorization: `Bearer ${preset}` };
+    return true;
+  }
+
+  const password = process.env.PASSWORD ?? "";
+  if (!password) return false;
+
+  try {
+    const res = await fetch(`${baseUrl}/auth/controlcenter/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data: unknown = await res.json();
+    if (!isObject(data) || data.ok !== true || typeof data.token !== "string") return false;
+    authHeaders = { authorization: `Bearer ${data.token}` };
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ==============================
 // API client
 // ==============================
 async function fetchFleetVehicleIds(baseUrl: string, cityId: string): Promise<string[] | null> {
   let payload: unknown;
   try {
-    const res = await fetch(`${baseUrl}/dev/fleet/${encodeURIComponent(cityId)}`);
+    const res = await fetch(`${baseUrl}/dev/fleet/${encodeURIComponent(cityId)}`, {
+      headers: authHeaders,
+    });
     payload = await res.json();
   } catch {
     return null;
@@ -123,7 +157,7 @@ async function patchLocation(
   try {
     const res = await fetch(url, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify({ cityId: opts.city, lat, lng }),
     });
     return res.ok;
@@ -136,7 +170,7 @@ async function patchOffline(opts: CliOptions, vehicleId: string): Promise<void> 
   try {
     await fetch(`${opts.baseUrl}/dev/vehicles/${encodeURIComponent(vehicleId)}/offline`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify({ cityId: opts.city }),
     });
   } catch {
@@ -154,6 +188,14 @@ async function main(): Promise<void> {
   if (!center) {
     console.error(
       `[fleet-sim] Oraș necunoscut: "${opts.city}". Orașe suportate: ${Object.keys(CITY_CENTERS).join(", ")}`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (!(await authenticate(opts.baseUrl))) {
+    console.error(
+      "[fleet-sim] Autentificare eșuată. Setează PASSWORD (parola controlcenter) sau TAXI_API_TOKEN.",
     );
     process.exitCode = 1;
     return;

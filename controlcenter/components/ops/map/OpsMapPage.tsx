@@ -138,11 +138,13 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
   const [view, setView] = React.useState<OpsMapView>(FALLBACK_VIEW);
 
   React.useEffect(() => {
+    if (!token) return;
+
     let alive = true;
 
     (async () => {
       try {
-        const r = await fetchFleetDirectory(cityId);
+        const r = await fetchFleetDirectory(cityId, token);
         if (!alive) return;
 
         setFleet(r.vehicles);
@@ -160,7 +162,7 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
     return () => {
       alive = false;
     };
-  }, [cityId]);
+  }, [cityId, token]);
 
   React.useEffect(() => {
     let alive = true;

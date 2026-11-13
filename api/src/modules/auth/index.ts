@@ -3,10 +3,10 @@
 // ==============================
 // Imports
 // ==============================
-import type { Express, Request, Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
 import type { ControlcenterScope, ControlcenterTokenPayload } from "@taxi/shared";
 
-import { signControlcenterToken } from "./controlcenterToken.js";
+import { signControlcenterToken, verifyControlcenterToken } from "./controlcenterToken.js";
 import { clearLoginFailures, isLoginBlocked, recordLoginFailure } from "./loginRateLimit.js";
 import { verifyPassword } from "./password.js";
 
@@ -64,6 +64,34 @@ function nowSec(): number {
 function bad(res: Response, code: number, msg: string): void {
   const body: LoginErr = { ok: false, error: msg };
   res.status(code).json(body);
+}
+
+function readBearer(req: Request): string {
+  const h = req.headers.authorization;
+  if (typeof h === "string" && h.toLowerCase().startsWith("bearer ")) {
+    return h.slice("bearer ".length).trim();
+  }
+  return "";
+}
+
+// ==============================
+// Middleware
+// ==============================
+/**
+ * Cere token valid pe orice rută înregistrată DUPĂ el. /health și login se înregistrează înainte.
+ * Fără el, /orders și /dev/* ar fi deschise oricui de pe internet (taxi-014).
+ */
+export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const secret = readEnv("TAXI_AUTH_TOKEN_SECRET");
+  if (!secret) return bad(res, 500, "Missing TAXI_AUTH_TOKEN_SECRET");
+
+  const token = readBearer(req);
+  if (!token) return bad(res, 401, "Unauthorized");
+
+  const v = verifyControlcenterToken(secret, token);
+  if (!v.ok) return bad(res, 401, "Unauthorized");
+
+  next();
 }
 
 // ==============================

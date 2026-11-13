@@ -172,10 +172,16 @@ export function getOrderStatusSnap(e: RealtimeEnvelope): OrderStatusSnap | null 
 // ==============================
 // API fetchers (controlcenter -> proxy)
 // ==============================
-export async function fetchFleetDirectory(cityId: string): Promise<FleetResponse> {
+export async function fetchFleetDirectory(
+  cityId: string,
+  authToken: string,
+): Promise<FleetResponse> {
   const url = `/api/fleet/${encodeURIComponent(cityId)}`;
 
-  const res = await fetch(url, { method: "GET" });
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { authorization: `Bearer ${authToken}` },
+  });
   const data = (await res.json()) as unknown;
 
   if (!res.ok) throw new Error("Fleet proxy error");

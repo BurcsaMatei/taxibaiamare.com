@@ -76,7 +76,11 @@ export default async function handler(
   const url = `${base}/dev/fleet/${encodeURIComponent(cityId)}`;
 
   try {
-    const r = await fetch(url, { method: "GET" });
+    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
+    const r = await fetch(url, {
+      method: "GET",
+      headers: auth ? { authorization: auth } : {},
+    });
 
     if (!r.ok) {
       res.status(502).json({ ok: false, error: `Upstream error: ${r.status}` });
