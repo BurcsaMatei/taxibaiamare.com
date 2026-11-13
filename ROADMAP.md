@@ -112,7 +112,7 @@ Scop: platforma capătă memorie — comenzi, orașe și flotă în DB.
 | 1 | taxi-011 Setup Supabase: proiect, schemă, env | #25 | P1 | api/infra | taxi-001, taxi-003 |
 | 2 | taxi-012 Persistare orders (POST în DB, PATCH validat) | #26 | P1 | api | taxi-008, taxi-011 |
 | 3 | taxi-013 GET /orders + GET /orders/:id | #27 | P1 | api | taxi-012 |
-| 3 | taxi-014 Auth pe rutele de scriere orders | #28 | P1 | api | taxi-009, taxi-012 |
+| 3 | ✅ 2026-11-13 — taxi-014 Auth pe rutele de scriere orders — **acoperit de taxi-051 (#97)**: token obligatoriu pe toate rutele; tenant check-ul pe oraș, obsolet după taxi-048 | #28 | P1 | api | taxi-009, taxi-012 |
 | 2 | taxi-015 Cities din Supabase | #29 | P2 | api | taxi-011 |
 | 2 | taxi-016 Vehicles/fleet din Supabase, multi-city | #30 | P2 | api | taxi-011 |
 

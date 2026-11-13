@@ -21,6 +21,14 @@ contul Mapbox, nu în cod.
 
 ---
 
+## 2026-11-13 — #28 (taxi-014) închis
+
+Esențialul (autentificare pe rutele de scriere) e acoperit de taxi-051 (#97). Tenant check-ul pe oraș din
+acest issue a devenit obsolet după taxi-048 (scope-ul `city` nu mai e emis); extensibilitatea pentru tokeni
+user/driver rămâne în issue-urile parcate (taxi-020/027).
+
+---
+
 ## 2026-11-13 — taxi-056 (#106): Node 24 peste tot
 
 Decizia din Val 0.3 (2026-09-04) fusese Node 24 (`engines.node: "24.x"`, are prioritate față de dashboard-ul
