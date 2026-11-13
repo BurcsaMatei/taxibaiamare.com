@@ -200,7 +200,7 @@ node --env-file=api/.env.local api/dist/index.js      # :3001
 
 npm run dev:controlcenter                              # next dev :3000
 
-npm run sim:fleet -- --city baia-mare --count 20       # simulator flotă (tsx); Ctrl+C = offline
+PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă (tsx, cere parola); Ctrl+C = offline
 npm run typecheck                                      # toate workspace-urile
 npm -w controlcenter run lint
 npm -w controlcenter run check:all                     # format:check + typecheck + lint

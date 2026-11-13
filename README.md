@@ -41,7 +41,7 @@ node --env-file=api/.env.local api/dist/index.js   # :3001
 npm run dev:controlcenter                           # :3000
 
 # 4. simulator flotă (terminal separat; Ctrl+C = offline)
-npm run sim:fleet -- --city baia-mare --count 20
+PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20   # parola controlcenter
 ```
 
 Verificare: `npm run typecheck` (toate workspace-urile), `npm -w controlcenter run check:all`.
