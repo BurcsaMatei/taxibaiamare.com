@@ -42,6 +42,17 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // Origin-ul WebSocket al API-ului (ex: wss://api.taxibaiamare.com) — altfel CSP-ul îl blochează în PROD
+  let WS_ORIGIN = "";
+  const wsEnv = (process.env.NEXT_PUBLIC_TAXI_WS_URL || "").trim();
+  if (wsEnv) {
+    try {
+      WS_ORIGIN = new URL(wsEnv).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+
   const nonce = makeNonce();
 
   // ---------------------------------------------------
@@ -75,6 +86,7 @@ export function middleware(req: NextRequest) {
   const connectSrc: string[] = [
     "'self'",
     ...(isProd ? [] : ["ws:"]),
+    ...(WS_ORIGIN ? [WS_ORIGIN] : []),
     ...(HAS_GA ? ["https://www.google-analytics.com", "https://region1.google-analytics.com"] : []),
     ...(HAS_GTM ? ["https://www.googletagmanager.com"] : []),
     ...(HAS_FB ? ["https://graph.facebook.com", "https://connect.facebook.net"] : []),

@@ -237,6 +237,9 @@ cd /vercel/path0 && npm -w packages/shared run build && npm -w controlcenter run
 
 Env pe Vercel (dashboard): `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL=https://api.taxibaiamare.com`,
 `NEXT_PUBLIC_TAXI_WS_URL=wss://api.taxibaiamare.com/ws`.
+`NEXT_PUBLIC_TAXI_WS_URL` se înglobează la build (schimbarea cere un deploy nou) și e adăugată automat în
+`connect-src` din CSP-ul de producție (`controlcenter/middleware.ts`) — altfel browserul blochează WS-ul.
+Un deploy Vercel pornește doar dacă s-a schimbat ceva în `controlcenter/` (un commit gol e ignorat).
 
 `next-pwa` a fost **eliminat complet** (taxi-007) — `NEXT_PUBLIC_ENABLE_PWA` nu mai există. PWA se
 reintroduce doar dacă devine cerință (probabil pentru driver).
