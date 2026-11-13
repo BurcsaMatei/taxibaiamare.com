@@ -1,4 +1,4 @@
-// controlcenter/pages/ops/[cityId]/map.tsx
+// controlcenter/pages/ops/[cityId]/orders.tsx
 
 // ==============================
 // Imports
@@ -7,7 +7,7 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import * as React from "react";
 
-import OpsMapPage from "../../../components/ops/map/OpsMapPage";
+import OpsOrdersPage from "../../../components/ops/orders/OpsOrdersPage";
 
 // ==============================
 // Utils
@@ -32,7 +32,7 @@ function toCitySlug(raw: string): string {
 // ==============================
 // Component
 // ==============================
-const OpsCityMapPage: NextPage = () => {
+const OpsCityOrdersPage: NextPage = () => {
   const router = useRouter();
 
   const cityParam = typeof router.query.cityId === "string" ? router.query.cityId : "";
@@ -40,10 +40,10 @@ const OpsCityMapPage: NextPage = () => {
 
   if (!cityId) return <div />;
 
-  return <OpsMapPage cityId={cityId} />;
+  return <OpsOrdersPage cityId={cityId} />;
 };
 
 // ==============================
 // Exporturi
 // ==============================
-export default OpsCityMapPage;
+export default OpsCityOrdersPage;

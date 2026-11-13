@@ -16,6 +16,7 @@ import { useControlcenterTopicEvents } from "../../../lib/realtime/controlcenter
 import * as s from "../../../styles/ops/opsMap.css";
 import OpsLoginGate from "../auth/OpsLoginGate";
 import OpsCitySwitcher from "../cities/OpsCitySwitcher";
+import OpsPageNav from "../OpsPageNav";
 import OpsCornerPanel from "./OpsCornerPanel";
 import OpsHud from "./OpsHud";
 import type {
@@ -450,6 +451,7 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
         />
 
         <div className={s.mapTopRight} aria-label="Map controls">
+          <OpsPageNav cityId={cityId} current="map" />
           <button className={s.mapBtn} type="button" onClick={onReset}>
             Reset map
           </button>

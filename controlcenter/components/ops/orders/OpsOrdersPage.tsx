@@ -18,6 +18,7 @@ import * as t from "../../../styles/ops/opsOrders.css";
 import ThemeSwitcher from "../../ThemeSwitcher";
 import OpsLoginGate from "../auth/OpsLoginGate";
 import OpsCitySwitcher from "../cities/OpsCitySwitcher";
+import OpsPageNav from "../OpsPageNav";
 
 // ==============================
 // Constante
@@ -598,6 +599,8 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
 
             <span className={hud.pillMuted}>error {lastError ?? "—"}</span>
           </div>
+
+          <OpsPageNav cityId={cityId} current="orders" />
 
           {isHq && token ? (
             <OpsCitySwitcher authToken={token} currentCityId={cityId} mode="orders" />
