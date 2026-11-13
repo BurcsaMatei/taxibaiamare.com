@@ -25,7 +25,7 @@ titlul `[PARCAT]` și rămân deschise.
 | Dispecerat | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), **taxi-050 (#96)** comandă manuală |
 | Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizorul e în discuție (Neon + Blob în loc de Supabase) |
 | Siguranță | ✅ taxi-051 (#97) token obligatoriu pe toate rutele (acoperă esențialul din taxi-014/#28), taxi-035 (#49) teste, taxi-042 (#56) hardening |
-| Live | **taxi-049 (#95)** deploy API pe VPS + env producție |
+| Live | ✅ taxi-049 (#95) deploy API pe Railway + domeniu + env producție (2026-11-13) |
 | Igienă | taxi-040 (#54), taxi-041 (#55) |
 
 **Parcate (`[PARCAT]`, 21 issue-uri):** user app + auth user (taxi-020…026, #34–#40), driver + dispatch
@@ -33,7 +33,7 @@ cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), 
 #50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
 (taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
 
-Ordinea recomandată: **#97 ✅ → #95 (deploy) → #31 → (furnizor persistență) → #25/#26/#27 → #96**, cu #49 și #56
+Ordinea recomandată: **#97 ✅ → #95 ✅ → #31 → (furnizor persistență) → #25/#26/#27 → #96**, cu #49 și #56
 în paralel și obligatoriu înainte de expunerea publică a API-ului.
 
 ---
@@ -78,12 +78,13 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 | 3 | ✅ 2026-07-02 — taxi-044 Setup Vercel + domeniu — **LIVE pe `ops.taxibaiamare.com`** (varianta A: doar controlcenter; build config în `controlcenter/vercel.json` cu `cd /vercel/path0`, Build Command Override OFF în dashboard — vezi `ARCHITECTURE.md` §10; proiectele user/driver/admin la scaffold-ul lor) | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |
 | 3 | ✅ 2026-07-03 — taxi-006 README root | #20 | P3 | infra | — |
 | 3 | ✅ 2026-07-03 — taxi-007 Eliminare next-pwa@0.0.1 | #21 | P3 | controlcenter | — |
+| — | ✅ 2026-11-13 — taxi-049 Deploy API pe Railway: api.taxibaiamare.com, login + hartă + WS live pe producție | #95 | P1 | infra/api | taxi-051 |
 | — | ✅ 2026-11-13 — taxi-051 Token obligatoriu pe toate rutele API (în afară de /health și login) | #97 | P1 | api/controlcenter | taxi-048 |
 | — | ✅ 2026-11-13 — taxi-048 Autentificare simplificată: parolă unică (scrypt) → direct pe hartă; branding Taxi Galant | #93 | P1 | api/controlcenter | — |
 
 Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând; 044 după 001+002+003.
 Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
-Notă 044: API-ul (Express + WS) NU merge pe Vercel — VPS Hetzner, api.domeniu.ro; Vercel doar pentru controlcenter/driver/admin (user e app nativ React Native, distribuit prin App Store + Google Play — fără subdomeniu web).
+Notă 044: API-ul (Express + WS, cu stare în memorie) NU rulează pe Vercel — rulează pe Railway, api.taxibaiamare.com (decizie 2026-11-13: Hetzner cerea verificare de identitate; vezi ARCHITECTURE §10); Vercel doar pentru controlcenter/driver/admin (user e app nativ React Native, distribuit prin App Store + Google Play — fără subdomeniu web).
 
 ### Faza 1 — Shared ca sursă de adevăr
 Scop: contractele din `@taxi/shared` devin reale și complete înainte de a construi pe ele.

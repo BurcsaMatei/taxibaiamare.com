@@ -21,6 +21,21 @@ contul Mapbox, nu în cod.
 
 ---
 
+## 2026-11-13 — taxi-049 (#95): API LIVE pe Railway, api.taxibaiamare.com
+
+Prima dată când tot fluxul merge pe producție: parolă → hartă Baia Mare → WS conectat. API-ul rulează pe
+**Railway** (nu pe VPS Hetzner, cum era planificat): Hetzner cerea verificare de identitate la crearea
+contului, iar un serviciu gestionat înseamnă mai puțini pași și zero administrare de server. Detalii de
+configurare, DNS (Hostico) și restricțiile Mapbox → `ARCHITECTURE.md` §10.
+
+Lecții din deploy: (1) CSP-ul de producție bloca WS-ul (taxi-052); (2) tokenul Mapbox avea restricții de URL
+doar pentru localhost → 403 la tile-uri; (3) Vercel sare peste deploy când în commit nu s-a schimbat nimic în
+`controlcenter/` (un commit gol nu ajută); (4) `mapbox-gl.css` lipsea (taxi-053). Railway e pe trial
+(30 de zile / 5 $) — de trecut pe plan plătit. Nu există încă vehicule reale: flota din Baia Mare e offline
+până rulează simulatorul.
+
+---
+
 ## 2026-11-13 — taxi-052 (#99): CSP de producție permite WebSocket-ul către API
 
 După deploy-ul API-ului pe Railway (`api.taxibaiamare.com`), login-ul și flota mergeau, dar HUD-ul arăta

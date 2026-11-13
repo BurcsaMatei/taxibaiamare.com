@@ -244,17 +244,62 @@ Un deploy Vercel pornește doar dacă s-a schimbat ceva în `controlcenter/` (un
 `next-pwa` a fost **eliminat complet** (taxi-007) — `NEXT_PUBLIC_ENABLE_PWA` nu mai există. PWA se
 reintroduce doar dacă devine cerință (probabil pentru driver).
 
-### API → VPS Hetzner (NEDEPLOYAT)
+### API → Railway (LIVE din 2026-11-13, taxi-049 / #95)
 
-**Express + WebSocket nu merg pe Vercel** — conexiuni persistente, nu serverless. Destinația e un VPS
-Hetzner pe `api.taxibaiamare.com`. **În scop activ → taxi-049 (#95).**
+API-ul rulează ca **proces permanent** pe Railway: serviciul `@taxi/api`, proiect `considerate-courage`
+(workspace „KonceptID's Projects”), mediul `production`, branch `main`.
 
-**Verificat 2026-09-02: domeniul nu răspunde.** Consecință directă: **pe producție, login-ul eșuează
-controlat.** Interfața e live, dar fără backend. Comportament așteptat, nu defect.
+| Setare | Valoare |
+| --- | --- |
+| Build | `npm -w packages/shared run build && npm -w api run build` (shared întâi) |
+| Start | `npm run start --workspace=@taxi/api` (`PORT` îl pune Railway; 8080) |
+| Healthcheck | `/health` |
+| Regiune | EU West (Amsterdam), **1 replică** — starea (hub, prezență) e în memorie |
+| Serverless | **OFF** — altfel serviciul adoarme și pierde conexiunile WS |
+| Wait for CI | **OFF** — CI-ul GitHub e blocat de facturare |
+| Watch Paths | `/api/**` și `/packages/shared/**` (commit-urile doar de docs nu redeployează) |
+| Variabile | `TAXI_AUTH_TOKEN_SECRET`, `TAXI_CONTROL_CENTER_PASSWORD_HASH` (hash generat cu `PASSWORD='…' npm run hash:password`) |
+| Domeniu | `api.taxibaiamare.com` (Custom Domain Railway, port 8080), certificat Let's Encrypt gestionat de Railway |
 
-### DNS
+**De ce Railway, nu VPS Hetzner (planul inițial):** Hetzner cerea verificare de identitate la creare de
+cont; un serviciu gestionat înseamnă mai puțini pași și zero administrare de server. VPS-ul rămâne
+variantă dacă costurile cresc.
 
-Hostico: CNAME `ops` → `cname.vercel-dns.com.`
+**De ce nu pe Vercel Functions:** Vercel suportă acum WebSocket în Functions (`vercel.com/docs/functions/websockets`,
+conexiunea se închide la durata maximă a funcției), dar API-ul ține hub-ul și prezența în **memoria unui
+singur proces**; pe mai multe instanțe serverless n-ar vedea aceeași stare fără un pub/sub (ex. Redis).
+
+**Plan Railway:** trial (30 de zile sau 5 $, un singur domeniu propriu). **De trecut pe plan plătit înainte
+de expirare, altfel serviciile se opresc.**
+
+**Rate limit login:** în spatele proxy-ului Railway, `req.ip` e al proxy-ului, deci cele 5 eșecuri/min
+sunt efectiv globale (5 parole greșite blochează login-ul pentru toți un minut). De rezolvat odată cu
+taxi-042 (#56), de ex. `trust proxy` + `X-Forwarded-For`.
+
+**Deploy-ul din `main` pornește singur** la modificări în `api/**` sau `packages/shared/**`.
+
+### DNS (Hostico, cPanel → Zone Editor)
+
+| Tip | Nume | Valoare |
+| --- | --- | --- |
+| CNAME | `ops` | `cname.vercel-dns.com.` |
+| CNAME | `api` | `<id>.up.railway.app` (valoarea arătată de Railway la Custom Domain) |
+| TXT | `_railway-verify.api` | `railway-verify=<hash>` (din Railway, pentru verificarea domeniului) |
+
+### Mapbox
+
+`NEXT_PUBLIC_MAPBOX_TOKEN` (Vercel) e un token public cu **restricții de URL** (contul Mapbox → Tokens).
+Lista trebuie să includă domeniul de producție (`https://ops.taxibaiamare.com`, fără `/*` la `https`)
+și adresele locale (`http://localhost:3000/*` etc.). Simptom când lipsește: harta goală și
+`403` de la `api.mapbox.com/v4/…` în consolă.
+
+### Lecții de deploy (2026-11-13)
+
+- **CSP:** `connect-src` din `middleware.ts` include automat origin-ul din `NEXT_PUBLIC_TAXI_WS_URL`
+  (taxi-052); fără el, browserul blochează WS-ul în producție (în dev CSP-ul permite `ws:`).
+- **Vercel sare peste deploy** dacă în commit nu s-a schimbat nimic în `controlcenter/` („Skipped – Not
+  affected"); un commit gol nu ajută. `NEXT_PUBLIC_*` se înglobează la build, deci o schimbare de variabilă
+  cere un deploy nou (Redeploy din dashboard sau o modificare reală în `controlcenter/`).
 
 ---
 
@@ -267,7 +312,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 | Risc | Impact |
 | --- | --- |
 | **Zero persistență** | Orice restart de API = pierderea tuturor comenzilor și a prezenței vehiculelor. Nu e un edge case, e comportamentul normal actual. Blocantul #1 al produsului. |
-| **API nedeployat** | Producția arată funcțională, dar nu poate autentifica pe nimeni. Un observator extern vede un produs live care „nu merge". |
+| **Railway în perioadă de probă** | La expirarea trialului (30 zile / 5 $) serviciul se oprește dacă nu se trece pe plan plătit. Până atunci, o singură replică: o repornire pierde starea din memorie. |
 | **Ordinea de build shared → api/controlcenter** | Dacă cineva rulează build-urile în altă ordine (sau CI-ul se rescrie neglijent), typecheck-ul cade pe `dist` lipsă. |
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
 | **Prezență in-memory cu TTL 60s** | Nu scalează peste o singură instanță de API. Două instanțe = două realități despre unde sunt vehiculele. |
@@ -282,8 +327,8 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 - **Zero teste** în tot repo-ul. Nici unit, nici E2E. Există issues pentru asta (taxi-035 #49,
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
-- **Deploy API pe VPS** → taxi-049 (#95) și **creare/atribuire manuală de comenzi din controlcenter**
-  → taxi-050 (#96): issue-uri deschise 2026-11-13, neînceput.
+- **Creare/atribuire manuală de comenzi din controlcenter** → taxi-050 (#96), neînceput. (Deploy-ul API-ului,
+  taxi-049 / #95, e făcut: vezi §10.)
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.
 - **Patru din cinci orașe au flotă zero** — comenzile acolo eșuează.

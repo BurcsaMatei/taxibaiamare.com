@@ -29,7 +29,7 @@ Platformă de taxi multi-oraș (BOLT-like) pentru România — brand **Taxi Gala
 user/driver/admin/landing sunt **parcate** (vezi `ROADMAP.md` §2).
 
 ```
-api/               Express 5 + WS (:3001)          — funcțional local, NEDEPLOYAT
+api/               Express 5 + WS (:3001)          — LIVE pe api.taxibaiamare.com (Railway)
 controlcenter/     Next.js 16 (:3000)              — LIVE pe ops.taxibaiamare.com
 packages/shared/   @taxi/shared                    — SURSĂ UNICĂ pentru domeniu
 packages/tokens/   @taxi/tokens                    — design tokens
@@ -42,14 +42,16 @@ Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user �
 
 ## Starea în trei rânduri
 
-**M1 atins** (2026-07-03). **Reorientare 2026-11-13:** scop activ = controlcenter + API + persistență +
-deploy; restul parcat (21 issues `[PARCAT]`). Milestone curent **M2** (revizuit), în curs.
-**Livrat 2026-11-13:** taxi-051 (#97) — token obligatoriu pe toate rutele API (simulatorul cere `PASSWORD`); taxi-048 (#93) — login cu **o singură parolă** (hash scrypt în env), direct pe
-`/ops/baia-mare/map`; fără PIN/City ID. Următorii: **#31** (pagina de comenzi), apoi persistența
-(**furnizorul e în discuție:** Neon + Blob în loc de Supabase) și **#95** (deploy API). 34 issues
-deschise: 13 active (+ #95, #96 noi), 21 parcate.
-**Nu există persistență** (refresh = totul pierdut) și **API-ul nu e deployat** (login-ul eșuează
-controlat pe producție — „Auth proxy error”, comportament așteptat până la #95). Detalii → `PRD.md` §5.
+**LIVE din 2026-11-13:** `ops.taxibaiamare.com` (Vercel) + `api.taxibaiamare.com` (Railway). Intri cu **o
+singură parolă** (hash scrypt în env) direct pe `/ops/baia-mare/map`; harta se încarcă, WS conectat.
+M1 atins (2026-07-03); **Reorientare 2026-11-13:** scop activ = controlcenter + API + persistență +
+deploy; restul parcat (21 issues `[PARCAT]`). Livrat azi: taxi-048 (#93 parolă), taxi-051 (#97 token pe
+toate rutele), taxi-049 (#95 deploy API), taxi-052 (#99 CSP/WS), taxi-053 (#101 mapbox css).
+**Nu există persistență** (refresh = totul pierdut) și **nu există vehicule reale**: cele 250 din Baia Mare
+sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- --base-url https://api.taxibaiamare.com`).
+Următorii: **#31** (pagina de comenzi), persistența (**furnizor în discuție:** Neon + Blob în loc de
+Supabase), **#96** (comandă manuală). **Railway e pe trial (30 zile / 5 $)** — de trecut pe plan plătit.
+Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
 ---
 

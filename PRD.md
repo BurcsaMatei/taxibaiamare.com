@@ -94,7 +94,7 @@ Acestea sunt cerințe de produs neîndeplinite, nu idei:
 | PWA pentru aplicația user | Decizie fermă: nativ React Native (§2) |
 | Subdomeniu web pentru user | Se distribuie prin store-uri |
 | Un proiect Vercel separat per suprafață, acum | „Varianta A": un singur proiect, două pagini interne. Se extinde când suprafețele există. |
-| API pe Vercel | Express + WebSocket cu conexiuni persistente → VPS Hetzner, nu serverless |
+| API pe Vercel | Express + WebSocket cu stare în memorie → proces permanent pe Railway (Vercel Functions suportă WS, dar nu și starea comună între instanțe) |
 | pnpm / Turborepo | npm workspaces, deliberat |
 | Bibliotecă de validare (zod etc.) | Guard-uri scrise de mână, care întorc `null` la invalid. Nu se schimbă fără discuție. |
 
@@ -115,9 +115,10 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 - **Pagina de comenzi e construită dar nemontată.** `OpsOrdersPage.tsx` (747 de linii, funcțional)
   nu e importată nicăieri; ruta `/ops/[cityId]/orders` afișează în schimb harta. Verificat în cod la
   2026-11-13. → taxi-017 (#31)
-- **API-ul nu e deployat.** `api.taxibaiamare.com` nu răspunde (verificat: fără DNS/serviciu).
-  Consecință: **pe producție, login-ul eșuează controlat.** Interfața e live, dar nu are backend.
-  Deployment-ul pe VPS Hetzner e acum **în scop** → taxi-049 (#95).
+- **API-ul e deployat** (Railway, `api.taxibaiamare.com`, din 2026-11-13, taxi-049 / #95): login-ul
+  funcționează pe producție, harta se încarcă, WS conectat. **Nu există șoferi/vehicule reale:** cele 250
+  de vehicule din Baia Mare sunt offline până rulează simulatorul sau apare aplicația driver. Planul
+  Railway e în perioadă de probă (30 de zile) — de trecut pe plan plătit.
 - Modulele `drivers` și `payments` sunt stub-uri goale (`export {}`).
 - Zero teste în tot repo-ul.
 
@@ -135,7 +136,7 @@ Niciun issue din M2 nu e început. 34 issues deschise (19 P1, 9 P2, 6 P3).
 | --- | --- | --- |
 | `ops.taxibaiamare.com` | Controlcenter (dispecerat) | ✅ live |
 | `taxibaiamare.com` (apex) + `www` | Tot controlcenter-ul, momentan | ✅ live — va deveni `landing` când există |
-| `api.taxibaiamare.com` | API Express + WS, pe VPS | ❌ nedeployat |
+| `api.taxibaiamare.com` | API Express + WS, pe Railway | ✅ live |
 
 ---
 
