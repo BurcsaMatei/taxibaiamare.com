@@ -4,6 +4,7 @@
 // Imports
 // ==============================
 // Global styles / vendor CSS (order matters)
+import "mapbox-gl/dist/mapbox-gl.css";
 import "../styles/globals.css";
 import "../styles/theme.global.css"; // mapează tokens → elemente
 
