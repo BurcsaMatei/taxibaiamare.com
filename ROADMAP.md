@@ -11,6 +11,10 @@ Cum se folosește:
 
 ## 2. Reorientare (2026-11-13)
 
+> **Principiu (2026-11-13):** până la finalul M2 nu se începe nimic din `[PARCAT]` și nicio infrastructură
+> nouă. Excepții: securitate pentru ce există și costurile Railway. **Controlcenter-ul doar observă** în timp
+> real; nu creează comenzi.
+
 Planul inițial (M2→M4) presupunea trei aplicații noi (user React Native, driver, admin) peste un API
 fără persistență. Din iulie 2026 nu s-a mai livrat nimic pe produs, iar complexitatea planificată depășea
 ce există în cod. **Decizie: ne concentrăm pe ce aduce valoare reală — un controlcenter operațional,
@@ -22,18 +26,18 @@ titlul `[PARCAT]` și rămân deschise.
 | Grup | Issue-uri active |
 |---|---|
 | Acces | ✅ taxi-048 (#93) parolă unică, direct pe hartă |
-| Dispecerat | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), **taxi-050 (#96)** comandă manuală |
+| Observare live | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), taxi-055 (#104) simulator de comenzi (date de test) |
 | Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizorul e în discuție (Neon + Blob în loc de Supabase) |
 | Siguranță | ✅ taxi-051 (#97) token obligatoriu pe toate rutele (acoperă esențialul din taxi-014/#28), taxi-035 (#49) teste, taxi-042 (#56) hardening |
 | Live | ✅ taxi-049 (#95) deploy API pe Railway + domeniu + env producție (2026-11-13) |
-| Igienă | taxi-040 (#54), taxi-041 (#55) |
+| Igienă | taxi-040 (#54), taxi-041 (#55), taxi-054 (#103) scoate numărul de telefon din HUD |
 
-**Parcate (`[PARCAT]`, 21 issue-uri):** user app + auth user (taxi-020…026, #34–#40), driver + dispatch
+**Parcate (`[PARCAT]`, 22 issue-uri):** comandă manuală din controlcenter (taxi-050, #96 — controlcenter-ul doar observă), user app + auth user (taxi-020…026, #34–#40), driver + dispatch
 cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), seed multi-oraș (taxi-036,
 #50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
 (taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
 
-Ordinea recomandată: **#97 ✅ → #95 ✅ → #31 → (furnizor persistență) → #25/#26/#27 → #96**, cu #49 și #56
+Ordinea recomandată: **#97 ✅ → #95 ✅ → #31 → (furnizor persistență) → #25/#26/#27 → #104**, cu #49 și #56
 în paralel și obligatoriu înainte de expunerea publică a API-ului.
 
 ---
@@ -243,7 +247,9 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-048 | #93 | — | — |
 | taxi-049 | #95 | 051 | — |
 | taxi-051 | #97 | 048 | 049 |
-| taxi-050 | #96 | 012, 014, 017 | — |
+| taxi-050 | #96 | — | — (PARCAT) |
+| taxi-054 | #103 | — | — |
+| taxi-055 | #104 | 051, 017 | — |
 
 ## 6. Milestone-uri
 
@@ -251,7 +257,7 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 Închise: toată Faza 0 (taxi-001…007, taxi-044) + taxi-047 (CI pe Node 22).
 Validare: secretele rotite și netracked, CI rulează pe PR și e verde (Node 22, aliniat cu producția), simulatorul de flotă merge pe WSL, controlcenter LIVE pe ops.taxibaiamare.com.
 
-**M2 — API persistent + controlcenter funcțional complet + API deployat (revizuit 2026-11-13: include taxi-049 și taxi-050)**
+**M2 — API persistent + controlcenter funcțional complet + API deployat (revizuit 2026-11-13: include taxi-049 ✅ și taxi-055; controlcenter-ul doar observă, comenzile vin din aplicațiile user/driver, deci în M2 datele de test vin din simulatoare)**
 Închise: taxi-008…taxi-019 (#22–#33).
 Validare: comandă creată cu curl autentificat → vizibilă în DB, în pagina de comenzi și pe hartă (markeri galben/roșu); refresh nu pierde nimic; tranziții invalide respinse.
 

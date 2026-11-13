@@ -40,17 +40,22 @@ Ordinea de dezvoltare, decisă și fixă: **controlcenter → landing → user �
 
 ---
 
+**Principiu (2026-11-13):** până la finalul M2 nu se începe nimic din `[PARCAT]` și nicio infrastructură
+nouă (excepții: securitate pentru ce există, costurile Railway). **Controlcenter-ul doar observă** în timp
+real clientul, șoferul și flota; nu creează comenzi. Telefonul: singurul rol e „user a sunat dispeceratul
+din aplicație" (nu sunt mașini libere), eveniment deja afișat în pagina de comenzi.
+
 ## Starea în trei rânduri
 
 **LIVE din 2026-11-13:** `ops.taxibaiamare.com` (Vercel) + `api.taxibaiamare.com` (Railway). Intri cu **o
 singură parolă** (hash scrypt în env) direct pe `/ops/baia-mare/map`; harta se încarcă, WS conectat.
 M1 atins (2026-07-03); **Reorientare 2026-11-13:** scop activ = controlcenter + API + persistență +
-deploy; restul parcat (21 issues `[PARCAT]`). Livrat azi: taxi-048 (#93 parolă), taxi-051 (#97 token pe
+deploy; restul parcat (22 issues `[PARCAT]`). Livrat azi: taxi-048 (#93 parolă), taxi-051 (#97 token pe
 toate rutele), taxi-049 (#95 deploy API), taxi-052 (#99 CSP/WS), taxi-053 (#101 mapbox css).
 **Nu există persistență** (refresh = totul pierdut) și **nu există vehicule reale**: cele 250 din Baia Mare
 sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- --base-url https://api.taxibaiamare.com`).
 Următorii: **#31** (pagina de comenzi), persistența (**furnizor în discuție:** Neon + Blob în loc de
-Supabase), **#96** (comandă manuală). **Railway e pe trial (30 zile / 5 $)** — de trecut pe plan plătit.
+Supabase), **#104** (simulator de comenzi pentru date de test). **Railway e pe trial (30 zile / 5 $)** — de trecut pe plan plătit.
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
 ---

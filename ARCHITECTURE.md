@@ -327,8 +327,9 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 - **Zero teste** în tot repo-ul. Nici unit, nici E2E. Există issues pentru asta (taxi-035 #49,
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
-- **Creare/atribuire manuală de comenzi din controlcenter** → taxi-050 (#96), neînceput. (Deploy-ul API-ului,
-  taxi-049 / #95, e făcut: vezi §10.)
+- **Date de test pentru controlcenter** (comenzi, evenimente „user a sunat dispeceratul”) → taxi-055 (#104):
+  simulator de comenzi, neînceput. Controlcenter-ul doar observă; nu are UI de creare a comenzilor.
+  (Deploy-ul API-ului, taxi-049 / #95, e făcut: vezi §10.)
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.
 - **Patru din cinci orașe au flotă zero** — comenzile acolo eșuează.

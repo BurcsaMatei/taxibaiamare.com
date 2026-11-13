@@ -21,6 +21,19 @@ contul Mapbox, nu în cod.
 
 ---
 
+## 2026-11-13 — Clarificare: controlcenter-ul doar observă; telefonul nu e parte din produs
+
+Corecție de plan, la cererea proprietarului: am presupus greșit (fără confirmare) că dispeceratul introduce
+comenzi primite la telefon. **Controlcenter-ul doar observă** în timp real ce fac clientul și șoferul; comenzile
+vin din aplicațiile user/driver. Singurul rol al telefonului: din aplicația de client se poate suna
+dispeceratul când nu sunt mașini libere, iar controlcenter-ul vede evenimentul `order.userCalledDispatch`
+(deja afișat în pagina de comenzi). Consecințe: taxi-050 (#96, comandă manuală) **parcat**; taxi-054 (#103)
+scoate numărul de telefon din HUD-ul hărții; taxi-055 (#104) adaugă un simulator de comenzi pentru date de
+test în M2. Aplicația driver: nativă sau PWA (Serwist), nedecis. Principiul „nimic din `[PARCAT]` și
+nicio infrastructură nouă până la finalul M2” e scris în `CLAUDE.md` și `ROADMAP.md`.
+
+---
+
 ## 2026-11-13 — taxi-049 (#95): API LIVE pe Railway, api.taxibaiamare.com
 
 Prima dată când tot fluxul merge pe producție: parolă → hartă Baia Mare → WS conectat. API-ul rulează pe

@@ -41,6 +41,14 @@ distribuită prin App Store și Google Play. **Nu PWA, nu web.** Nu va exista `a
 Motivul: o aplicație de comandă taxi are nevoie de locație în background, notificări push fiabile și
 prezență pe ecranul telefonului — lucruri pe care un PWA nu le oferă comparabil pe iOS.
 
+**Aplicația driver:** nativă sau PWA (cu Serwist) — **nedecis**.
+
+**Rolul controlcenter-ului: doar observare în timp real.** Comenzile vin din aplicațiile user/driver;
+controlcenter-ul nu creează și nu atribuie comenzi, doar arată live ce face clientul, ce face șoferul și
+unde sunt vehiculele. **Telefonul are un singur rol:** din aplicația de client se poate suna dispeceratul
+când nu sunt mașini libere (toate ocupate), iar controlcenter-ul vede evenimentul
+(`order.userCalledDispatch`, deja afișat în pagina de comenzi). Altfel, produsul nu depinde de telefon.
+
 ---
 
 ## 3. Ce trebuie să facă — cerințe pe suprafață
@@ -55,7 +63,7 @@ prezență pe ecranul telefonului — lucruri pe care un PWA nu le oferă compar
 | Comutare între orașe (city switcher), pentru operatorii HQ | ✅ funcțional |
 | Actualizare în timp real, cu reconectare automată la pierderea conexiunii | ✅ funcțional |
 | **Pagina de comenzi — listă, filtrare, acțiuni** | ❌ **construită dar nemontată** (vezi §5) |
-| Creare + atribuire manuală a unei comenzi către un vehicul | ❌ nu există → taxi-050 (#96) |
+| Atribuire manuală a unei comenzi către un vehicul | ❌ nu există — **în afara scopului actual** (controlcenter-ul doar observă; taxi-050 / #96, parcat) |
 
 ### 3.2 Reguli de business stabilite
 

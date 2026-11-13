@@ -11,7 +11,7 @@ Monorepo npm workspaces: backend realtime (Express + WebSocket), dispecerat live
 | `controlcenter/` | Dispecerat — Next.js 16, hartă live Mapbox, port 3000 | LIVE pe [ops.taxibaiamare.com](https://ops.taxibaiamare.com) |
 | `packages/shared/` | `@taxi/shared` — domain types, contracts, evenimente realtime | sursă unică de adevăr |
 | `packages/tokens/` | `@taxi/tokens` — design tokens (Vanilla Extract, light/dark) | stabil |
-| `user/`, `driver/` | App client (React Native, iOS + Android), respectiv driver PWA | inexistente încă — nume rezervate |
+| `user/`, `driver/` | App client (React Native, iOS + Android), respectiv driver (nativ sau PWA cu Serwist — nedecis) | inexistente încă — nume rezervate |
 
 ## Arhitectură
 
