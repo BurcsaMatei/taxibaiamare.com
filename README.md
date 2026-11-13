@@ -25,7 +25,7 @@ Dispatch: nearest-vehicle (Haversine), sincron la `POST /orders`.
 
 ## Pornire locală (WSL)
 
-Cerințe: Node 22.x. Copiază `api/.env.example` → `api/.env.local` și `controlcenter/.env.example` → `controlcenter/.env.local`, completează valorile.
+Cerințe: Node 24.x. Copiază `api/.env.example` → `api/.env.local` și `controlcenter/.env.example` → `controlcenter/.env.local`, completează valorile.
 
 ```bash
 npm install

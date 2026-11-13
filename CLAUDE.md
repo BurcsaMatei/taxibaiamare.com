@@ -144,7 +144,7 @@ npm run typecheck                                 # toate workspace-urile
 npm -w controlcenter run check:all                # format:check + typecheck + lint
 ```
 
-Node 22.x. Env: `api/.env.example` + `controlcenter/.env.example` — reale, fiecare cheie e citită de cod.
+Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard-ul Vercel). Env: `api/.env.example` + `controlcenter/.env.example` — reale, fiecare cheie e citită de cod.
 
 ---
 
