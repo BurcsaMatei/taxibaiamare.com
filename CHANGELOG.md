@@ -12,6 +12,19 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-14 — taxi-017 (#31) pas 1: pagina de comenzi montată + navigare (PR #108)
+
+`/ops/[cityId]/orders` era o copie a hărții; acum montează `OpsOrdersPage` (747 linii, până atunci cod mort).
+Componentă nouă `OpsPageNav` (buton Hartă / Comenzi) pe ambele pagini, vizibilă pentru orice utilizator logat
+(selectorul de oraș rămâne doar pentru HQ). **#31 rămâne deschis:** markerii galben/roșu sunt pasul 3, iar
+ordinea s-a schimbat în **pas 1 → simulator de comenzi (#104) → markeri**, fiindcă fără simulator nu pot fi
+verificați. Procedura de lucru a fost fixată: PR → verificare în Preview → „merge” explicit → squash în `main`;
+fără branch `dev`; doar docs-only direct în `main`. Lecții de Preview (variabile pe Preview + Redeploy, harta
+goală din cauza restricțiilor tokenului Mapbox) → `ARCHITECTURE.md` §10. Railway trecut pe plan plătit.
+CI-ul GitHub a rămas roșu (blocaj de facturare), neschimbat.
+
+---
+
 ## 2026-11-13 — taxi-053 (#101): importă mapbox-gl.css
 
 `mapbox-gl.css` nu era importat nicăieri; consola de producție avertiza că lipsesc declarațiile CSS ale

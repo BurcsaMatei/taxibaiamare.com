@@ -90,7 +90,7 @@ Toate citesc `TAXI_API_BASE_URL` prin același pattern `readEnv` / `apiBaseUrl()
 | Rută | Stare |
 | --- | --- |
 | `/ops/[cityId]/map` | ✅ canonică, funcțională |
-| `/ops/[cityId]/orders` | ⚠️ randează **harta**, nu comenzile (§7) |
+| `/ops/[cityId]/orders` | ✅ montează `OpsOrdersPage` (taxi-017 pas 1, PR #108); fără simulator arată „No events yet" |
 | `/ops/map`, `/ops/orders` | **deprecated** — city-pickers legacy, nu construi peste ele |
 
 ---
@@ -269,8 +269,8 @@ variantă dacă costurile cresc.
 conexiunea se închide la durata maximă a funcției), dar API-ul ține hub-ul și prezența în **memoria unui
 singur proces**; pe mai multe instanțe serverless n-ar vedea aceeași stare fără un pub/sub (ex. Redis).
 
-**Plan Railway:** trial (30 de zile sau 5 $, un singur domeniu propriu). **De trecut pe plan plătit înainte
-de expirare, altfel serviciile se opresc.**
+**Plan Railway:** plan plătit (trecut din trial la 2026-11-14), deci serviciul nu se mai oprește la expirarea
+trialului. Costurile rămân de urmărit.
 
 **Rate limit login:** în spatele proxy-ului Railway, `req.ip` e al proxy-ului, deci cele 5 eșecuri/min
 sunt efectiv globale (5 parole greșite blochează login-ul pentru toți un minut). De rezolvat odată cu
@@ -293,6 +293,15 @@ Lista trebuie să includă domeniul de producție (`https://ops.taxibaiamare.com
 și adresele locale (`http://localhost:3000/*` etc.). Simptom când lipsește: harta goală și
 `403` de la `api.mapbox.com/v4/…` în consolă.
 
+### Preview Vercel (lecții 2026-11-14, PR #108)
+
+- Variabilele `TAXI_API_BASE_URL` și `NEXT_PUBLIC_TAXI_WS_URL` trebuie bifate pe **Production și Preview**.
+  Dacă lipsesc pe Preview, proxy-ul cade pe `http://localhost:3001` și login-ul dă „Auth proxy error".
+- O variabilă schimbată se aplică doar deploy-urilor noi: **Redeploy** din dashboard (un commit gol e ignorat).
+- Preview-ul e protejat de login-ul Vercel (rutele dau 302 pentru `curl`), deci se verifică din browser.
+- Harta poate ieși goală pe Preview: tokenul Mapbox e restricționat la `ops.taxibaiamare.com` + localhost.
+  Nu se adaugă `*.vercel.app` în token; harta se verifică pe producție, după merge.
+
 ### Lecții de deploy (2026-11-13)
 
 - **CSP:** `connect-src` din `middleware.ts` include automat origin-ul din `NEXT_PUBLIC_TAXI_WS_URL`
@@ -312,7 +321,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 | Risc | Impact |
 | --- | --- |
 | **Zero persistență** | Orice restart de API = pierderea tuturor comenzilor și a prezenței vehiculelor. Nu e un edge case, e comportamentul normal actual. Blocantul #1 al produsului. |
-| **Railway în perioadă de probă** | La expirarea trialului (30 zile / 5 $) serviciul se oprește dacă nu se trece pe plan plătit. Până atunci, o singură replică: o repornire pierde starea din memorie. |
+| **Railway: o singură replică** | Planul e plătit (din 2026-11-14), deci nu mai expiră. O repornire pierde totuși starea din memorie. |
 | **Ordinea de build shared → api/controlcenter** | Dacă cineva rulează build-urile în altă ordine (sau CI-ul se rescrie neglijent), typecheck-ul cade pe `dist` lipsă. |
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
 | **Prezență in-memory cu TTL 60s** | Nu scalează peste o singură instanță de API. Două instanțe = două realități despre unde sunt vehiculele. |
@@ -338,7 +347,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 
 | Element | Verdict |
 | --- | --- |
-| **`controlcenter/components/ops/orders/OpsOrdersPage.tsx`** | 747 linii funcționale, **importate de nicăieri** (verificat 2026-11-13). Ruta `/ops/[cityId]/orders` afișează harta în loc. → taxi-017 (#31) |
+| ~~`controlcenter/components/ops/orders/OpsOrdersPage.tsx`~~ | **Montat** din 2026-11-14 (PR #108). Conține încă cod vechi pentru scope-ul `city` (nu mai e emis) — de curățat la un task separat |
 | `api/src/modules/drivers/` · `payments/` | Stub-uri goale (`export {}`) |
 | `/ops/map`, `/ops/orders` (fără `[cityId]`) | Rute deprecated → ștergere la taxi-040 (#54) |
 | `GET /dev/cities/:cityId` | Deprecated, fără auth |

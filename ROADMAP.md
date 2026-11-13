@@ -37,8 +37,9 @@ cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), 
 #50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
 (taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
 
-Ordinea recomandată: **#97 ✅ → #95 ✅ → #31 → (furnizor persistență) → #25/#26/#27 → #104**, cu #49 și #56
-în paralel și obligatoriu înainte de expunerea publică a API-ului.
+Ordinea recomandată (revizuită 2026-11-14): **#97 ✅ → #95 ✅ → #31 pas 1 ✅ → #104 (simulator comenzi) → #31
+markeri → (furnizor persistență) → #25/#26/#27**, cu #49 și #56 în paralel și obligatoriu înainte de
+expunerea publică a API-ului. Motiv: fără simulator, nici pagina de comenzi, nici markerii nu pot fi verificați.
 
 ---
 
@@ -124,7 +125,7 @@ Scop: dispeceratul devine operațional — două pagini distincte, date care sup
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
-| 1 | taxi-017 Pagină comenzi separată + markeri PNG galben/roșu | #31 | P1 | controlcenter | — |
+| 1 | taxi-017 Pagină comenzi separată + markeri PNG galben/roșu — **✅ 2026-11-14 pas 1** (pagina montată + buton Hartă/Comenzi, PR #108); **rămâne:** markerii galben/roșu, după taxi-055 (#104), ca să poată fi verificați | #31 | P1 | controlcenter | — |
 | 2 | taxi-018 OpsOrdersPage pe snapshot + live WS | #32 | P1 | controlcenter | taxi-013, taxi-017 |
 | 2 | taxi-019 Snapshot inițial pe hartă | #33 | P2 | controlcenter | taxi-013, taxi-016 |
 

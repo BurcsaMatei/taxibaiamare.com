@@ -62,7 +62,7 @@ când nu sunt mașini libere (toate ocupate), iar controlcenter-ul vede evenimen
 | HUD cu starea flotei | ✅ funcțional |
 | Comutare între orașe (city switcher), pentru operatorii HQ | ✅ funcțional |
 | Actualizare în timp real, cu reconectare automată la pierderea conexiunii | ✅ funcțional |
-| **Pagina de comenzi — listă, filtrare, acțiuni** | ❌ **construită dar nemontată** (vezi §5) |
+| **Pagina de comenzi — listă, filtrare, acțiuni** | ✅ montată (2026-11-14); fără date până la simulator (vezi §5) |
 | Atribuire manuală a unei comenzi către un vehicul | ❌ nu există — **în afara scopului actual** (controlcenter-ul doar observă; taxi-050 / #96, parcat) |
 
 ### 3.2 Reguli de business stabilite
@@ -120,13 +120,13 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 
 - **Nu există persistență.** Un restart de server sau un refresh înseamnă pierderea tuturor comenzilor.
   Acesta e blocantul numărul unu al întregului produs.
-- **Pagina de comenzi e construită dar nemontată.** `OpsOrdersPage.tsx` (747 de linii, funcțional)
-  nu e importată nicăieri; ruta `/ops/[cityId]/orders` afișează în schimb harta. Verificat în cod la
-  2026-11-13. → taxi-017 (#31)
+- **Pagina de comenzi e montată** din 2026-11-14 (PR #108, taxi-017 pas 1), cu buton Hartă / Comenzi. Fără
+  persistență și fără simulator de comenzi (taxi-055 / #104) nu are ce afișa. Markerii galben/roșu pe
+  hartă rămân de făcut (#31).
 - **API-ul e deployat** (Railway, `api.taxibaiamare.com`, din 2026-11-13, taxi-049 / #95): login-ul
   funcționează pe producție, harta se încarcă, WS conectat. **Nu există șoferi/vehicule reale:** cele 250
   de vehicule din Baia Mare sunt offline până rulează simulatorul sau apare aplicația driver. Planul
-  Railway e în perioadă de probă (30 de zile) — de trecut pe plan plătit.
+  Railway e pe plan plătit (din 2026-11-14).
 - Modulele `drivers` și `payments` sunt stub-uri goale (`export {}`).
 - Zero teste în tot repo-ul.
 

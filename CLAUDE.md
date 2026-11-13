@@ -54,8 +54,11 @@ deploy; restul parcat (22 issues `[PARCAT]`). Livrat azi: taxi-048 (#93 parolă)
 toate rutele), taxi-049 (#95 deploy API), taxi-052 (#99 CSP/WS), taxi-053 (#101 mapbox css).
 **Nu există persistență** (refresh = totul pierdut) și **nu există vehicule reale**: cele 250 din Baia Mare
 sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- --base-url https://api.taxibaiamare.com`).
-Următorii: **#31** (pagina de comenzi), persistența (**furnizor în discuție:** Neon + Blob în loc de
-Supabase), **#104** (simulator de comenzi pentru date de test). **Railway e pe trial (30 zile / 5 $)** — de trecut pe plan plătit.
+**2026-11-14:** taxi-017 (#31) pas 1 livrat (PR #108) — `/ops/[cityId]/orders` montează pagina de comenzi,
+buton **Hartă / Comenzi** pe ambele pagini; **#31 rămâne deschis** (markerii galben/roșu, pas 3).
+Următorii: **#104** (simulator de comenzi, ca să avem ce vedea), apoi markerii din #31, apoi persistența
+(**furnizor în discuție:** Neon în loc de Supabase; Blob nu e necesar acum). **Railway e pe plan plătit**
+(trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
 ---
@@ -66,7 +69,11 @@ Workflow (branch, când e nevoie de issue, analiză→execuție, PR, merge) → 
 `STANDARDS.md` §7. Nu se repetă aici.
 
 - Commit: `type(scope): description` — ex. `feat(controlcenter): …`, `chore(api): …`.
-- După merge: update `CLAUDE.md` + `ROADMAP.md` dacă starea s-a schimbat.
+- **Procedura (tot ce merge e live în producție):** branch → commit → PR → verificare în Preview și analiza
+  PR-ului împreună → corecturi dacă e nevoie → **„merge" explicit de la proprietar** → squash în `main`. Nu se
+  lucrează pe un branch `dev`. Doar modificările **docs-only** merg direct în `main`.
+- După merge: update `CLAUDE.md` + `ROADMAP.md` dacă starea s-a schimbat (commit docs direct în `main`).
+- PR-ul care livrează doar o parte dintr-un issue folosește `Refs #nr`, nu `Closes #nr`.
 - `npm run typecheck` + `npm -w controlcenter run lint` curate înainte de commit.
 - **CI-ul GitHub nu pornește** (blocaj de facturare la nivel de cont). Verificarea reală e Vercel Preview.
 
@@ -162,7 +169,12 @@ Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard
 
 - **Doar `baia-mare` are flotă** (250 vehicule sintetice). În celelalte 4 orașe, dispecerizarea eșuează —
   e așteptat, nu e bug.
-- **`OpsOrdersPage.tsx` există dar nu e montat nicăieri** — ruta de comenzi afișează harta. → taxi-017 (#31)
+- **Pagina de comenzi e montată** (PR #108), dar fără simulator nu are date: arată „No events yet". Harta
+  încă folosește un singur marker (`taxi.png`); `taxi-busy.png` nu e folosit → #31, pas 3.
+- **Preview Vercel:** `TAXI_API_BASE_URL` și `NEXT_PUBLIC_TAXI_WS_URL` trebuie bifate pe **Production și
+  Preview**, iar după orice schimbare de variabilă e nevoie de **Redeploy** (altfel „Auth proxy error"). Harta
+  poate ieși goală pe Preview: tokenul Mapbox permite doar `ops.taxibaiamare.com` + localhost (403 pe tile-uri);
+  nu se lărgește tokenul pentru `*.vercel.app` — harta se verifică pe producție, după merge.
 - Modulele `api/src/modules/drivers/` și `payments/` sunt stub-uri goale.
 - **Zero teste** în repo.
 - Aplicația **user va fi nativă (React Native)**, nu PWA, nu web. Nu există `app.taxibaiamare.com` în plan.
