@@ -12,6 +12,15 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — taxi-052 (#99): CSP de producție permite WebSocket-ul către API
+
+După deploy-ul API-ului pe Railway (`api.taxibaiamare.com`), login-ul și flota mergeau, dar HUD-ul arăta
+„WS: DISCONNECTED / ws error”. Cauza: `connect-src` din CSP-ul de producție (`controlcenter/middleware.ts`)
+permitea doar `'self'` și Mapbox; în dev permite `ws:`, de aceea local mergea. Acum origin-ul din
+`NEXT_PUBLIC_TAXI_WS_URL` se adaugă automat în `connect-src`.
+
+---
+
 ## 2026-11-13 — taxi-051 (#97): token obligatoriu pe toate rutele API
 
 Pregătire pentru deploy-ul public (#95): `requireAuth` pe tot ce e după login; `/health` și login
