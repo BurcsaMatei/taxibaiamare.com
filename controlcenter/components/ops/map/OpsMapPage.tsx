@@ -38,7 +38,6 @@ import {
   normalizeIndicativInput,
   ONLINE_TTL_MS,
   parseIsoMs,
-  toTelHref,
   useNowTick,
   useThemeMode,
 } from "./opsMap.utils";
@@ -132,7 +131,6 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
   const [fleetTotal, setFleetTotal] = React.useState<number>(0);
   const [fleetError, setFleetError] = React.useState<string | null>(null);
 
-  const [dispatchPhone, setDispatchPhone] = React.useState<string | null>(null);
   const [cityError, setCityError] = React.useState<string | null>(null);
 
   const [view, setView] = React.useState<OpsMapView>(FALLBACK_VIEW);
@@ -174,7 +172,6 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
         const c = await fetchCity(cityId, token);
         if (!alive) return;
 
-        setDispatchPhone(c.dispatchPhone ?? null);
         setCityError(null);
 
         // ✅ map view per city (single source of truth from API)
@@ -198,7 +195,6 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
       } catch (err) {
         if (!alive) return;
         const msg = err instanceof Error ? err.message : "Failed to load city info";
-        setDispatchPhone(null);
         setCityError(msg);
         // keep fallback view
       }
@@ -208,8 +204,6 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
       alive = false;
     };
   }, [cityId, token]);
-
-  const dispatchHref = dispatchPhone ? toTelHref(dispatchPhone) : "";
 
   const fleetById = React.useMemo(() => {
     const m = new globalThis.Map<string, FleetVehicle>();
@@ -475,8 +469,6 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
           ready={ready}
           lastError={lastError}
           cityId={cityId}
-          dispatchPhone={dispatchPhone}
-          dispatchHref={dispatchHref}
           topic={topic}
           onlineCount={onlineCount}
           offlineCount={offlineCount}
