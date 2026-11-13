@@ -18,7 +18,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | Hartă | Mapbox GL |
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
-| Runtime | **Node 22.x** (`controlcenter/.nvmrc`, `engines`, CI, Vercel — aliniate) |
+| Runtime | **Node 24.x** (`.nvmrc` root + controlcenter, `engines`, CI; Vercel și Railway citesc `engines.node`) |
 | Persistență | **niciuna încă** — furnizor în discuție (Supabase inițial; se evaluează Neon Postgres + Vercel Blob) |
 | Aplicație user (viitor) | React Native — nativ iOS + Android |
 
@@ -232,7 +232,7 @@ cd /vercel/path0 && npm -w packages/shared run build && npm -w controlcenter run
 
 > **Lecție costisitoare:** Vercel rulează `buildCommand` cu working directory = Root Directory
 > (`controlcenter/`), deci comenzile `npm -w` **nu găsesc workspace-urile** fără `cd /vercel/path0`
-> (rădăcina repo-ului în containerul de build). Dashboard: Root Directory `controlcenter`, Node 22,
+> (rădăcina repo-ului în containerul de build). Dashboard: Root Directory `controlcenter`, Node 24 (oricum `engines.node` din `package.json` are prioritate),
 > **Build Command Override OFF** — comanda trăiește doar în `vercel.json`.
 
 Env pe Vercel (dashboard): `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL=https://api.taxibaiamare.com`,
@@ -362,7 +362,7 @@ coerent înainte să existe.
 ## 12. Stare CI
 
 `.github/workflows/ci.yml` la root: shared build → typecheck → lint → api build → controlcenter build.
-Rulează pe push în `main` și pe toate PR-urile, **pe Node 22** (taxi-047).
+Rulează pe push în `main` și pe toate PR-urile, **pe Node 24** (taxi-047 îl aliniase pe 22; mutat pe 24 la taxi-056).
 
 > ⚠️ La 2026-09-02, CI-ul **nu pornește**: GitHub raportează
 > *„the job was not started because your account is locked due to a billing issue"* — blocaj la nivel de

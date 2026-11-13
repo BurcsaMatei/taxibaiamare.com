@@ -21,6 +21,14 @@ contul Mapbox, nu în cod.
 
 ---
 
+## 2026-11-13 — taxi-056 (#106): Node 24 peste tot
+
+Decizia din Val 0.3 (2026-09-04) fusese Node 24 (`engines.node: "24.x"`, are prioritate față de dashboard-ul
+Vercel), dar au rămas pe 22: `controlcenter/.nvmrc`, `node-version` din CI și documentația (CLAUDE, README,
+ARCHITECTURE). Aliniate pe 24. Node local: 24.14.1. Railway citește tot `engines.node`.
+
+---
+
 ## 2026-11-13 — taxi-054 (#103): scoate numărul de telefon din HUD-ul hărții
 
 Rândul „Dispatch” (numărul orașului, link `tel:`) din panoul Status al hărții a fost scos, împreună cu
