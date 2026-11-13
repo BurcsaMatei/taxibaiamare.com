@@ -12,6 +12,15 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-13 — taxi-053 (#101): importă mapbox-gl.css
+
+`mapbox-gl.css` nu era importat nicăieri; consola de producție avertiza că lipsesc declarațiile CSS ale
+Mapbox GL. Importat în `pages/_app.tsx`, la secțiunea de vendor CSS. Harta goală de pe producție avea
+o cauză separată: 403 de la `api.mapbox.com` (restricții de URL pe tokenul din Vercel), rezolvată în
+contul Mapbox, nu în cod.
+
+---
+
 ## 2026-11-13 — taxi-052 (#99): CSP de producție permite WebSocket-ul către API
 
 După deploy-ul API-ului pe Railway (`api.taxibaiamare.com`), login-ul și flota mergeau, dar HUD-ul arăta
