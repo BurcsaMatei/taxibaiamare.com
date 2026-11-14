@@ -55,14 +55,15 @@ toate rutele), taxi-049 (#95 deploy API), taxi-052 (#99 CSP/WS), taxi-053 (#101 
 **Nu există persistență** (refresh = totul pierdut) și **nu există vehicule reale**: cele 250 din Baia Mare
 sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- --base-url https://api.taxibaiamare.com`).
 **2026-11-14:** taxi-017 (#31) pas 1 livrat (PR #108) — `/ops/[cityId]/orders` montează pagina de comenzi,
-buton **Hartă / Comenzi** pe ambele pagini; **#31 rămâne deschis** (markerii galben/roșu, pas 3).
+buton **Hartă / Comenzi** pe ambele pagini. **2026-11-14:** markerii livrați (PR #111) — mașina cu comandă
+activă e roșie (`taxi-busy.png`), cea liberă galbenă; verificat pe producție; **#31 închis**.
 **2026-11-14:** taxi-055 (#104) livrat (PR #109) — `npm run sim:orders`; verificat local (comenzi live în
 pagina de comenzi + evenimentul „user a sunat dispeceratul"); **#104 închis** după verificarea și pe
 producție (`--base-url https://api.taxibaiamare.com`, 2026-11-14).
 **2026-11-14:** PR B livrat (PR #110) — API-ul ține minte vehiculele ocupate (listă în memorie, se pierde la
 restart; eliberare la COMPLETED/CANCELED); verificat local: comenzile eșuate apar cu FAILED + CALLED.
 Verificat și pe producție: comenzi live, FAILED + CALLED cu flotă mică.
-Următorii: markerii din #31, apoi persistența (**furnizor în discuție:** Neon în
+Următorii: persistența (**furnizor în discuție:** Neon în
 loc de Supabase; Blob nu e necesar acum). **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
@@ -175,8 +176,9 @@ Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard
 
 - **Doar `baia-mare` are flotă** (250 vehicule sintetice). În celelalte 4 orașe, dispecerizarea eșuează —
   e așteptat, nu e bug.
-- **Pagina de comenzi e montată** (PR #108), dar fără simulator nu are date: arată „No events yet". Harta
-  încă folosește un singur marker (`taxi.png`); `taxi-busy.png` nu e folosit → #31, pas 3.
+- **Pagina de comenzi e montată** (PR #108); fără date arată „No events yet" (date de test: `sim:orders`).
+  Harta colorează mașinile: galben = liberă, roșu = cu comandă activă (PR #111). Harta e goală pe
+  localhost/Preview (token Mapbox) — se verifică pe producție.
 - **Preview Vercel:** `TAXI_API_BASE_URL` și `NEXT_PUBLIC_TAXI_WS_URL` trebuie bifate pe **Production și
   Preview**, iar după orice schimbare de variabilă e nevoie de **Redeploy** (altfel „Auth proxy error"). Harta
   poate ieși goală pe Preview: tokenul Mapbox permite doar `ops.taxibaiamare.com` + localhost (403 pe tile-uri);

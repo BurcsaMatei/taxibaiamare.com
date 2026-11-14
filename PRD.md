@@ -122,7 +122,7 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
   Acesta e blocantul numărul unu al întregului produs.
 - **Pagina de comenzi e montată** din 2026-11-14 (PR #108, taxi-017 pas 1), cu buton Hartă / Comenzi. Fără
   persistență arată doar ce se întâmplă cât e deschisă; datele de test vin din `npm run sim:orders`
-  (taxi-055 / #104, PR #109). Markerii galben/roșu pe hartă rămân de făcut (#31).
+  (taxi-055 / #104, PR #109). Harta arată mașinile cu comandă activă în roșu, cele libere în galben (#31, PR #111).
 - **API-ul e deployat** (Railway, `api.taxibaiamare.com`, din 2026-11-13, taxi-049 / #95): login-ul
   funcționează pe producție, harta se încarcă, WS conectat. **Nu există șoferi/vehicule reale:** cele 250
   de vehicule din Baia Mare sunt offline până rulează simulatorul sau apare aplicația driver. Planul

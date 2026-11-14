@@ -12,6 +12,12 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-14 — taxi-017 (#31): markere roșu/galben pe hartă (PR #111)
+
+Mașina cu o comandă activă (atribuită, nefinalizată) apare roșie (`taxi-busy.png`), cea liberă galbenă (`taxi.png`); offline nu apare. `OpsMapPage` calculează `busyVehicleIds` din evenimentele de comenzi, `OpsMapCanvas` alege imaginea cu o expresie Mapbox `case` după proprietatea `busy`. Verificat pe producție cu `sim:fleet --count 5` + `sim:orders` (harta e goală pe localhost/Preview din cauza restricției tokenului Mapbox). **#31 închis.** Nu există marker pentru comenzile FAILED (fără mașină): decizie de produs separată.
+
+---
+
 ## 2026-11-14 — PR B (#110): API-ul ține minte vehiculele ocupate
 
 Modul nou `api/src/modules/dispatch/busyVehicles.ts` (listă în memorie orderId ↔ vehicul). Vehiculul devine
