@@ -25,6 +25,8 @@ const FOCUS_ZOOM = 15.5;
 // icon local (public/)
 const TAXI_ICON_SRC = "/images/taxi/taxi.png";
 const TAXI_ICON_ID = "taxi-icon";
+const TAXI_BUSY_ICON_SRC = "/images/taxi/taxi-busy.png"; // mașină cu comandă activă (roșie)
+const TAXI_BUSY_ICON_ID = "taxi-busy-icon";
 
 const SOURCE_ID = "vehicles-source";
 const LAYER_ID = "vehicles-layer";
@@ -55,6 +57,7 @@ export type OpsMapCanvasProps = {
   view: OpsMapView; // ✅ per-city view (no hardcoding here)
   vehiclesForRender: ReadonlyArray<VehiclePoint>;
   vehiclesForSearch: ReadonlyArray<VehiclePoint>;
+  busyVehicleIds: ReadonlySet<string>; // vehicule cu comandă activă -> marker roșu
   themeMode: ThemeMode;
   onSelectVehicleId: (vehicleId: string) => void;
   onStatusChange: (st: OpsMapCanvasStatus) => void;
@@ -80,11 +83,11 @@ function round6(n: number): string {
   return (Math.round(n * 1_000_000) / 1_000_000).toString();
 }
 
-function signatureForPoints(list: ReadonlyArray<VehiclePoint>): string {
+function signatureForPoints(list: ReadonlyArray<VehiclePoint>, busy: ReadonlySet<string>): string {
   if (list.length === 0) return "0";
   // stable signature: id + coords
   return list
-    .map((v) => `${v.vehicleId}:${round6(v.lng)}:${round6(v.lat)}`)
+    .map((v) => `${v.vehicleId}:${round6(v.lng)}:${round6(v.lat)}:${busy.has(v.vehicleId) ? 1 : 0}`)
     .sort()
     .join("|");
 }
@@ -98,6 +101,7 @@ const OpsMapCanvas = React.forwardRef<OpsMapCanvasHandle, OpsMapCanvasProps>(
       view,
       vehiclesForRender,
       vehiclesForSearch,
+      busyVehicleIds,
       themeMode,
       onSelectVehicleId,
       onStatusChange,
@@ -145,6 +149,11 @@ const OpsMapCanvas = React.forwardRef<OpsMapCanvasHandle, OpsMapCanvasProps>(
         if (!map.hasImage(TAXI_ICON_ID)) map.addImage(TAXI_ICON_ID, img as never);
       }
 
+      if (!map.hasImage(TAXI_BUSY_ICON_ID)) {
+        const imgBusy = await loadMapImage(map, TAXI_BUSY_ICON_SRC);
+        if (!map.hasImage(TAXI_BUSY_ICON_ID)) map.addImage(TAXI_BUSY_ICON_ID, imgBusy as never);
+      }
+
       // source
       if (!map.getSource(SOURCE_ID)) {
         map.addSource(SOURCE_ID, {
@@ -160,7 +169,7 @@ const OpsMapCanvas = React.forwardRef<OpsMapCanvasHandle, OpsMapCanvasProps>(
           type: "symbol",
           source: SOURCE_ID,
           layout: {
-            "icon-image": TAXI_ICON_ID,
+            "icon-image": ["case", ["get", "busy"], TAXI_BUSY_ICON_ID, TAXI_ICON_ID],
             "icon-size": 1,
             "icon-allow-overlap": true,
             "icon-ignore-placement": true,
@@ -330,19 +339,19 @@ const OpsMapCanvas = React.forwardRef<OpsMapCanvasHandle, OpsMapCanvasProps>(
       const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
       if (!src) return;
 
-      const sig = signatureForPoints(vehiclesForRender);
+      const sig = signatureForPoints(vehiclesForRender, busyVehicleIds);
       if (lastDataSigRef.current === sig) return;
       lastDataSigRef.current = sig;
 
       const features: VehicleFeature[] = vehiclesForRender.map((v) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [v.lng, v.lat] },
-        properties: { vehicleId: v.vehicleId, ts: v.ts },
+        properties: { vehicleId: v.vehicleId, ts: v.ts, busy: busyVehicleIds.has(v.vehicleId) },
       }));
 
       const data: VehicleFeatureCollection = { type: "FeatureCollection", features };
       src.setData(data);
-    }, [vehiclesForRender]);
+    }, [vehiclesForRender, busyVehicleIds]);
 
     // ------------------------------
     // Imperative API
