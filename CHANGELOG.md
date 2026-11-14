@@ -12,6 +12,17 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-14 — PR B (#110): API-ul ține minte vehiculele ocupate
+
+Modul nou `api/src/modules/dispatch/busyVehicles.ts` (listă în memorie orderId ↔ vehicul). Vehiculul devine
+ocupat la atribuire, `chooseNearestVehicle` sare peste ocupate, iar `PATCH /orders/:id/status` îl eliberează la
+COMPLETED/CANCELED. Fără mașini libere → `dispatch: FAILED` (`NO_AVAILABLE_VEHICLE`). Verificat cu `curl` și în
+browser cu `sim:fleet --count 2` + `sim:orders --interval 1500` (FAILED + CALLED apar natural). Limite: stare
+în memorie (se pierde la restart), fără expirare, PATCH nu validează tranzițiile. Motiv: markerii roșii din #31
+ar fi fost false fără „ocupat” în API.
+
+---
+
 ## 2026-11-14 — taxi-055 (#104): simulator de comenzi `sim:orders` (PR #109)
 
 Script nou `scripts/dev-simulate-orders.ts`, pe modelul `sim:fleet`: creează comenzi de test (`POST /orders`),

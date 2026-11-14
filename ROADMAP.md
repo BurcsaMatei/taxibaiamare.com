@@ -37,8 +37,8 @@ cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), 
 #50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
 (taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
 
-Ordinea recomandată (revizuită 2026-11-14): **#97 ✅ → #95 ✅ → #31 pas 1 ✅ → #104 ✅ → vehicule ocupate în API
-(PR B, listă în memorie; fără issue separat încă) → #31 markeri → (furnizor persistență) → #25/#26/#27**, cu
+Ordinea recomandată (revizuită 2026-11-14): **#97 ✅ → #95 ✅ → #31 pas 1 ✅ → #104 (cod ✅, de rulat pe producție) → vehicule ocupate în API
+✅ (PR B, #110) → #31 markeri → (furnizor persistență) → #25/#26/#27**, cu
 #49 și #56 în paralel și obligatoriu înainte de expunerea publică a API-ului. Motiv: fără simulator, nici
 pagina de comenzi, nici markerii nu pot fi verificați; fără „ocupat" în API, markerii roșii ar fi false.
 
