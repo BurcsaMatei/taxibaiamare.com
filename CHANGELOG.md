@@ -12,6 +12,20 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-14 — taxi-055 (#104): simulator de comenzi `sim:orders` (PR #109)
+
+Script nou `scripts/dev-simulate-orders.ts`, pe modelul `sim:fleet`: creează comenzi de test (`POST /orders`),
+le trece prin `ASSIGNED → IN_PROGRESS → COMPLETED` (15% `CANCELED`) și trimite `POST /orders/:id/call`
+după `dispatch: FAILED` (singurul rol al telefonului), sau forțat cu `--force-calls`. Comanda rămasă `NEW`
+după un dispatch eșuat nu e anulată: simulatorul nu inventează un flux de produs. Ctrl+C anulează comenzile
+active. Verificat local, în browser: comenzile apar live, iar apelul apare în coloana CALL (`+40700000000`,
+`USER_APP`). Rândurile cu coordonate 0 apar când pagina e deschisă după `order.created` (pagina se
+construiește doar din evenimentele văzute cât e deschisă; se rezolvă cu snapshot, #32). **#104 rămâne
+deschis până la rularea pe producție.** Descoperit la analiză: API-ul nu ține minte vehiculele ocupate
+(aceeași mașină poate lua mai multe comenzi) → PR B, separat, ca schimbare de comportament în API.
+
+---
+
 ## 2026-11-14 — taxi-017 (#31) pas 1: pagina de comenzi montată + navigare (PR #108)
 
 `/ops/[cityId]/orders` era o copie a hărții; acum montează `OpsOrdersPage` (747 linii, până atunci cod mort).

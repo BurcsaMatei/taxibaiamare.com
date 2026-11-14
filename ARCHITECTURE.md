@@ -337,8 +337,12 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 - **Zero teste** în tot repo-ul. Nici unit, nici E2E. Există issues pentru asta (taxi-035 #49,
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
-- **Date de test pentru controlcenter** (comenzi, evenimente „user a sunat dispeceratul”) → taxi-055 (#104):
-  simulator de comenzi, neînceput. Controlcenter-ul doar observă; nu are UI de creare a comenzilor.
+- **Date de test pentru controlcenter** (comenzi, evenimente „user a sunat dispeceratul”): `npm run sim:orders`
+  (taxi-055 / #104, PR #109), verificat local; de verificat pe producție. Controlcenter-ul doar observă; nu
+  are UI de creare a comenzilor.
+- **API-ul nu ține minte vehiculele ocupate:** `chooseNearestVehicle` alege cea mai apropiată mașină online,
+  chiar dacă are deja o comandă activă, iar `PATCH /orders/:id/status` nu eliberează nimic. → PR B (listă în
+  memorie, eliberare la COMPLETED/CANCELED).
   (Deploy-ul API-ului, taxi-049 / #95, e făcut: vezi §10.)
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.

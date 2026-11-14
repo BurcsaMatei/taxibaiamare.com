@@ -56,9 +56,12 @@ toate rutele), taxi-049 (#95 deploy API), taxi-052 (#99 CSP/WS), taxi-053 (#101 
 sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- --base-url https://api.taxibaiamare.com`).
 **2026-11-14:** taxi-017 (#31) pas 1 livrat (PR #108) — `/ops/[cityId]/orders` montează pagina de comenzi,
 buton **Hartă / Comenzi** pe ambele pagini; **#31 rămâne deschis** (markerii galben/roșu, pas 3).
-Următorii: **#104** (simulator de comenzi, ca să avem ce vedea), apoi markerii din #31, apoi persistența
-(**furnizor în discuție:** Neon în loc de Supabase; Blob nu e necesar acum). **Railway e pe plan plătit**
-(trecut din trial la 2026-11-14).
+**2026-11-14:** taxi-055 (#104) livrat (PR #109) — `npm run sim:orders`; verificat local (comenzi live în
+pagina de comenzi + evenimentul „user a sunat dispeceratul"); **#104 rămâne deschis până la verificarea pe
+producție** (`--base-url https://api.taxibaiamare.com`, după PR B).
+Următorii: **PR B** — API-ul să țină minte vehiculele ocupate (listă în memorie, fără infrastructură nouă;
+eliberare la COMPLETED/CANCELED), apoi markerii din #31, apoi persistența (**furnizor în discuție:** Neon în
+loc de Supabase; Blob nu e necesar acum). **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
 ---

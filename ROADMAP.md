@@ -26,7 +26,7 @@ titlul `[PARCAT]` și rămân deschise.
 | Grup | Issue-uri active |
 |---|---|
 | Acces | ✅ taxi-048 (#93) parolă unică, direct pe hartă |
-| Observare live | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), taxi-055 (#104) simulator de comenzi (date de test) |
+| Observare live | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), ✅ 2026-11-14 taxi-055 (#104) simulator de comenzi (PR #109; verificat local, de verificat pe producție) |
 | Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizorul e în discuție (Neon + Blob în loc de Supabase) |
 | Siguranță | ✅ taxi-051 (#97) token obligatoriu pe toate rutele (acoperă esențialul din taxi-014/#28), taxi-035 (#49) teste, taxi-042 (#56) hardening |
 | Live | ✅ taxi-049 (#95) deploy API pe Railway + domeniu + env producție (2026-11-13) |
@@ -37,9 +37,10 @@ cu confirmare (taxi-027…032, #41–#46), taxi-033 (#47), E2E (taxi-034, #48), 
 #50), landing (taxi-037, #51), pricing/payments (taxi-038/039, #52/#53), entitate vehicul cu poze
 (taxi-043, #57), admin (taxi-045, #59). Se reiau doar după ce scopul activ e livrat și validat.
 
-Ordinea recomandată (revizuită 2026-11-14): **#97 ✅ → #95 ✅ → #31 pas 1 ✅ → #104 (simulator comenzi) → #31
-markeri → (furnizor persistență) → #25/#26/#27**, cu #49 și #56 în paralel și obligatoriu înainte de
-expunerea publică a API-ului. Motiv: fără simulator, nici pagina de comenzi, nici markerii nu pot fi verificați.
+Ordinea recomandată (revizuită 2026-11-14): **#97 ✅ → #95 ✅ → #31 pas 1 ✅ → #104 ✅ → vehicule ocupate în API
+(PR B, listă în memorie; fără issue separat încă) → #31 markeri → (furnizor persistență) → #25/#26/#27**, cu
+#49 și #56 în paralel și obligatoriu înainte de expunerea publică a API-ului. Motiv: fără simulator, nici
+pagina de comenzi, nici markerii nu pot fi verificați; fără „ocupat" în API, markerii roșii ar fi false.
 
 ---
 
