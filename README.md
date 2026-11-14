@@ -42,6 +42,9 @@ npm run dev:controlcenter                           # :3000
 
 # 4. simulator flotă (terminal separat; Ctrl+C = offline)
 PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20   # parola controlcenter
+
+# 5. simulator comenzi (terminal separat, lângă simulatorul de flotă; Ctrl+C = anulează comenzile active)
+PASSWORD='…' npm run sim:orders -- --city baia-mare
 ```
 
 Verificare: `npm run typecheck` (toate workspace-urile), `npm -w controlcenter run check:all`.

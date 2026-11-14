@@ -147,6 +147,7 @@ npm -w api run build
 node --env-file=api/.env.local api/dist/index.js  # :3001 — API-ul nu încarcă singur .env.local
 npm run dev:controlcenter                         # :3000
 PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă (cere parola controlcenter); Ctrl+C = offline
+PASSWORD='…' npm run sim:orders -- --city baia-mare            # simulator comenzi (cere parola; rulează lângă sim:fleet); --base-url https://api.taxibaiamare.com pentru producție, --force-calls ca să vezi apelurile la dispecerat; Ctrl+C = anulează comenzile active
 npm run typecheck                                 # toate workspace-urile
 npm -w controlcenter run check:all                # format:check + typecheck + lint
 ```
