@@ -31,8 +31,8 @@ după `dispatch: FAILED` (singurul rol al telefonului), sau forțat cu `--force-
 după un dispatch eșuat nu e anulată: simulatorul nu inventează un flux de produs. Ctrl+C anulează comenzile
 active. Verificat local, în browser: comenzile apar live, iar apelul apare în coloana CALL (`+40700000000`,
 `USER_APP`). Rândurile cu coordonate 0 apar când pagina e deschisă după `order.created` (pagina se
-construiește doar din evenimentele văzute cât e deschisă; se rezolvă cu snapshot, #32). **#104 rămâne
-deschis până la rularea pe producție.** Descoperit la analiză: API-ul nu ține minte vehiculele ocupate
+construiește doar din evenimentele văzute cât e deschisă; se rezolvă cu snapshot, #32). **#104 închis** după rularea pe producție
+(2026-11-14: comenzi live, FAILED + CALLED cu 2 mașini). Descoperit la analiză: API-ul nu ține minte vehiculele ocupate
 (aceeași mașină poate lua mai multe comenzi) → PR B, separat, ca schimbare de comportament în API.
 
 ---

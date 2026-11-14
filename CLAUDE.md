@@ -57,11 +57,12 @@ sunt offline până rulează simulatorul (`PASSWORD='…' npm run sim:fleet -- -
 **2026-11-14:** taxi-017 (#31) pas 1 livrat (PR #108) — `/ops/[cityId]/orders` montează pagina de comenzi,
 buton **Hartă / Comenzi** pe ambele pagini; **#31 rămâne deschis** (markerii galben/roșu, pas 3).
 **2026-11-14:** taxi-055 (#104) livrat (PR #109) — `npm run sim:orders`; verificat local (comenzi live în
-pagina de comenzi + evenimentul „user a sunat dispeceratul"); **#104 rămâne deschis până la verificarea pe
-producție** (`--base-url https://api.taxibaiamare.com`).
+pagina de comenzi + evenimentul „user a sunat dispeceratul"); **#104 închis** după verificarea și pe
+producție (`--base-url https://api.taxibaiamare.com`, 2026-11-14).
 **2026-11-14:** PR B livrat (PR #110) — API-ul ține minte vehiculele ocupate (listă în memorie, se pierde la
 restart; eliberare la COMPLETED/CANCELED); verificat local: comenzile eșuate apar cu FAILED + CALLED.
-Următorii: rularea simulatoarelor pe producție (închide #104), apoi markerii din #31, apoi persistența (**furnizor în discuție:** Neon în
+Verificat și pe producție: comenzi live, FAILED + CALLED cu flotă mică.
+Următorii: markerii din #31, apoi persistența (**furnizor în discuție:** Neon în
 loc de Supabase; Blob nu e necesar acum). **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 

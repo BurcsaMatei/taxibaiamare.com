@@ -338,7 +338,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
   taxi-034 #48), nerezolvate.
 - **Fără rate limiting, fără CORS explicit, fără logging structurat** pe API (taxi-042 / #56).
 - **Date de test pentru controlcenter** (comenzi, evenimente „user a sunat dispeceratul”): `npm run sim:orders`
-  (taxi-055 / #104, PR #109), verificat local; de verificat pe producție. Controlcenter-ul doar observă; nu
+  (taxi-055 / #104, PR #109), verificat local și pe producție (#104 închis). Controlcenter-ul doar observă; nu
   are UI de creare a comenzilor.
 - **Vehicule ocupate — rezolvat parțial (PR #110):** `api/src/modules/dispatch/busyVehicles.ts` ține în memorie
   vehiculul fiecărei comenzi active; `chooseNearestVehicle` sare peste ocupate; `PATCH /orders/:id/status` îl
