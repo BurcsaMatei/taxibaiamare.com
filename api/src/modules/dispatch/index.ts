@@ -6,6 +6,7 @@
 import type { GeoPoint } from "@taxi/shared";
 
 import { getOnlineVehicleLocations } from "../vehicles/index.js";
+import { isVehicleBusy } from "./busyVehicles.js";
 
 // ==============================
 // Types
@@ -67,6 +68,9 @@ export function chooseNearestVehicle(input: ChooseNearestVehicleInput): ChooseNe
   let best: { vehicleId: string; distanceMeters: number } | null = null;
 
   for (const c of candidates) {
+    // vehiculele cu o comandă activă nu primesc altă comandă
+    if (isVehicleBusy(cityId, c.vehicleId)) continue;
+
     const d = distanceMeters(input.pickup, c.point);
 
     if (!best) {

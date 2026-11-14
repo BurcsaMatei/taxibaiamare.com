@@ -6,6 +6,7 @@
 import type { Express } from "express";
 import crypto from "node:crypto";
 import {
+  isFinalOrderStatus,
   makeOrderAssignedEnvelope,
   makeOrderCreatedEnvelope,
   makeOrderDispatchFailedEnvelope,
@@ -30,6 +31,7 @@ import type {
 
 import type { RealtimeHub } from "../realtime/wsServer.js";
 import { publishStrict } from "../realtime/index.js";
+import { markVehicleBusy, releaseVehicleOfOrder } from "../dispatch/busyVehicles.js";
 import { chooseNearestVehicle } from "../dispatch/index.js";
 
 // ==============================
@@ -161,7 +163,9 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    // 2b) dacă avem alocare: emit order.assigned + order.statusChanged NEW->ASSIGNED
+    // 2b) dacă avem alocare: vehiculul devine ocupat, apoi emit order.assigned + order.statusChanged NEW->ASSIGNED
+    markVehicleBusy(cityId, assignedVehicleId, orderId);
+
     const envAssigned = makeOrderAssignedEnvelope({
       orderId,
       cityId,
@@ -288,6 +292,9 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
     }
 
     const cityId = b.cityId.trim();
+
+    // comandă încheiată -> vehiculul ei se eliberează
+    if (isFinalOrderStatus(to)) releaseVehicleOfOrder(orderId);
 
     const env = makeOrderStatusChangedEnvelope({
       orderId,
