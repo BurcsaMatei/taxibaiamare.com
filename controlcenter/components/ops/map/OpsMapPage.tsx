@@ -271,6 +271,19 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
     return byOrder;
   }, [eventsSafe]);
 
+  // vehicule cu comandă activă (atribuită și nefinalizată) -> marker roșu pe hartă
+  const busyVehicleIds = React.useMemo(() => {
+    const busy = new globalThis.Set<string>();
+
+    for (const a of latestAssignedByOrderId.values()) {
+      const st = latestStatusByOrderId.get(a.orderId);
+      const status: OrderStatus = st?.status ?? "ASSIGNED";
+      if (isActiveOrderStatus(status)) busy.add(a.vehicleId);
+    }
+
+    return busy;
+  }, [latestAssignedByOrderId, latestStatusByOrderId]);
+
   const vehiclesOnline = React.useMemo(() => {
     const out: VehiclePoint[] = [];
 
@@ -445,6 +458,7 @@ export default function OpsMapPage(props: OpsMapPageProps): React.JSX.Element {
           view={view}
           vehiclesForRender={vehiclesOnline}
           vehiclesForSearch={vehiclesForSearch}
+          busyVehicleIds={busyVehicleIds}
           themeMode={themeMode}
           onSelectVehicleId={(id) => setSelectedVehicleId(id)}
           onStatusChange={setMapStatus}

@@ -62,6 +62,7 @@ export type DriverUiStatus = "OFFLINE" | "ONLINE" | "BUSY";
 export type VehicleFeatureProps = {
   vehicleId: string;
   ts: string;
+  busy: boolean;
 };
 
 export type VehicleFeature = Feature<Point, VehicleFeatureProps>;
