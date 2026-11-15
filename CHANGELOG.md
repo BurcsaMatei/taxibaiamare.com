@@ -12,6 +12,21 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-15 — taxi-013 (#27): GET /orders și GET /orders/:id (PR #114)
+
+`GET /orders`: `cityId` obligatoriu; `status` (listă cu virgulă), `vehicleId` (indicativ), `from`/`to` (ISO 8601
+**cu fus orar obligatoriu**; `from` inclusiv, `to` exclusiv; un `+` necodat în URL e reparat), `limit` (50 implicit,
+max 200, peste se plafonează); cele mai noi primele; `hasMore` ca rezultatele tăiate de limită să nu treacă
+neobservate. `GET /orders/:id`: 404 pentru necunoscut / non-uuid. **Motiv:** proprietarul caută o comandă la o
+plângere după **dată, oră și indicativ** (nu după telefon, pe care nu-l salvăm) — deci perioadă extinsă +
+indicativ, apoi alege din listă. Fără index nou (perioada restrânge deja prin `(city_id, created_at desc)`).
+`@taxi/shared`: `Order` aliniat la tabela reală (fără `userId`/preț/telefon — nefolosite), `SERVICE_TYPE_CODES`,
+`isServiceTypeCode`, `ListOrdersResponse`, `GetOrderResponse`. Istoricul pentru user/driver și căutarea după
+telefon/nume/email = cu aplicațiile (PRD). Testat pe bază temporară (34/34), apoi pe producție, doar citire
+(13/13, comparat cu baza). **#27 închis.** Rămas: pagina de comenzi încă nu citește din bază (#32).
+
+---
+
 ## 2026-11-15 — taxi-012 (#26): comenzile se salvează în Neon (PR #113)
 
 `POST /orders` salvează comanda **înainte** să publice evenimentele (fără bază sau `DATABASE_URL` → `503`, nimic

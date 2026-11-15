@@ -70,9 +70,11 @@ nu e necesar. Resursa `taxibaiamare` există (regiune `fra1`, plan Free la nivel
 la proiectul Vercel** (controlcenter-ul nu se conectează la bază). **#25 livrat (PR #112):** driver `pg`, `npm run migrate`, migrația
 `001_create_orders.sql` aplicată pe producție. **#26 livrat (PR #113):** `POST /orders` salvează comenzile în bază
 (înainte să publice; fără bază → 503), „ocupat" se deduce din comenzile active (migrația `002`: o comandă activă
-per vehicul), `PATCH` validează tranzițiile (400/409/404). **Citirea (`GET`) și pagina de comenzi încă nu folosesc
-baza** (#27, #32). **Doar comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric de poziții —
-decizia proprietarului). Următorii: #27, apoi #32 și #29/#30/#33.
+per vehicul), `PATCH` validează tranzițiile (400/409/404). **#27 livrat (PR #114):** `GET /orders` (oraș obligatoriu;
+filtre status, indicativ, perioadă `from`/`to` cu fus orar; 50 implicit, max 200; `hasMore`) și `GET /orders/:id`;
+căutarea la plângere = perioadă + indicativ. **Pagina de comenzi încă nu folosește baza** (#32). **Doar comenzile se
+persistă; pozițiile vehiculelor rămân în memorie** (fără istoric de poziții — decizia proprietarului). Următorii:
+#32 (pagina de comenzi pe date din bază + live, etichete în română, formular de căutare), apoi #29/#30/#33.
 **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
