@@ -103,3 +103,86 @@ export const small = style({
   color: vars.color.muted,
   fontWeight: 800,
 });
+
+// ==============================
+// Căutare (perioadă + indicativ) și mesaje
+// ==============================
+export const toolbar = style({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "flex-end",
+  gap: vars.space.md,
+  marginBottom: vars.space.lg,
+  padding: vars.space.lg,
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  boxShadow: vars.shadow.md,
+});
+
+export const field = style({
+  display: "grid",
+  gap: vars.space.xs,
+});
+
+export const fieldLabel = style({
+  fontSize: "12px",
+  fontWeight: 900,
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
+  color: vars.color.muted,
+});
+
+export const input = style({
+  height: 40,
+  paddingInline: vars.space.md,
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.bg,
+  color: vars.color.text,
+  fontWeight: 700,
+  fontFamily: "inherit",
+  selectors: {
+    "&:focus-visible": { outline: `2px solid ${vars.color.focus}`, outlineOffset: 2 },
+  },
+});
+
+export const button = style({
+  height: 40,
+  paddingInline: vars.space.lg,
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  color: vars.color.text,
+  fontWeight: 900,
+  fontFamily: "inherit",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  selectors: {
+    "&:hover:not(:disabled)": { background: vars.color.surfaceHover },
+    "&:focus-visible": { outline: `2px solid ${vars.color.focus}`, outlineOffset: 2 },
+    "&:disabled": { opacity: 0.6, cursor: "not-allowed" },
+  },
+});
+
+export const buttonPrimary = style({
+  background: vars.color.primary,
+  color: vars.color.bg,
+  borderColor: vars.color.primary,
+  selectors: {
+    "&:hover:not(:disabled)": { background: vars.color.primary },
+  },
+});
+
+export const notice = style({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: vars.space.md,
+  marginBottom: vars.space.lg,
+  padding: vars.space.md,
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surfaceHover,
+  fontWeight: 800,
+});

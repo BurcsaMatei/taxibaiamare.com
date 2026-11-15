@@ -83,7 +83,7 @@ Endpoint-urile `/dev/vehicles/*` se retrag după implementarea driver-ului (taxi
 
 ### 3.2 Proxy-uri Next (`controlcenter/pages/api/`)
 
-`auth/controlcenter/login` · `cities/index` · `cities/[cityId]` · `fleet/[cityId]` · `csp-report`
+`auth/controlcenter/login` · `cities/index` · `cities/[cityId]` · `fleet/[cityId]` · `orders/index` (GET, trimite query string-ul neschimbat către `GET /orders`) · `csp-report`
 
 Toate citesc `TAXI_API_BASE_URL` prin același pattern `readEnv` / `apiBaseUrl()`.
 
@@ -92,7 +92,7 @@ Toate citesc `TAXI_API_BASE_URL` prin același pattern `readEnv` / `apiBaseUrl()
 | Rută | Stare |
 | --- | --- |
 | `/ops/[cityId]/map` | ✅ canonică, funcțională |
-| `/ops/[cityId]/orders` | ✅ montează `OpsOrdersPage` (taxi-017 pas 1, PR #108); fără simulator arată „No events yet" |
+| `/ops/[cityId]/orders` | ✅ `OpsOrdersPage` (taxi-018 / #32): la deschidere încarcă cele mai noi 50 de comenzi din `GET /orders` (cerute după ce topicul WS e confirmat, ca nimic să nu se piardă între poză și evenimente), apoi aplică evenimentele live pe ele. Un eveniment mai vechi decât starea din bază nu o dă înapoi; evenimentele pentru comenzi necunoscute se ignoră (fără rânduri 0,0). Formular de căutare (De la / Până la / Indicativ → `GET /orders`, max 200, mesaj dacă mai există rezultate); în modul căutare evenimentele live nu mai modifică tabelul. Interfața în română. Logica pură: `opsOrders.utils.ts` |
 | `/ops/map`, `/ops/orders` | **deprecated** — city-pickers legacy, nu construi peste ele |
 
 ---
@@ -324,7 +324,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 
 | Risc | Impact |
 | --- | --- |
-| **Pozițiile și prezența sunt doar în memorie** | Un restart de API golește harta câteva secunde, până când vehiculele raportează din nou. Decizie: pozițiile nu se persistă. Comenzile se salvează în bază (#26); **ele se pierd din pagina de comenzi la refresh până la #27/#32** (pagina nu citește încă din bază). |
+| **Pozițiile și prezența sunt doar în memorie** | Un restart de API golește harta câteva secunde, până când vehiculele raportează din nou. Decizie: pozițiile nu se persistă. Comenzile se salvează în bază (#26) și pagina de comenzi le citește (#32), deci supraviețuiesc unui refresh. **Apelurile la dispecerat (`order.userCalledDispatch`) NU se salvează:** coloana „Apel" arată doar apelurile primite cât pagina e deschisă. |
 | **Railway: o singură replică** | Planul e plătit (din 2026-11-14), deci nu mai expiră. O repornire pierde totuși starea din memorie. |
 | **Ordinea de build shared → api/controlcenter** | Dacă cineva rulează build-urile în altă ordine (sau CI-ul se rescrie neglijent), typecheck-ul cade pe `dist` lipsă. |
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
