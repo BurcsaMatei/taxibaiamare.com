@@ -6,7 +6,6 @@
 import type { GeoPoint } from "@taxi/shared";
 
 import { getOnlineVehicleLocations } from "../vehicles/index.js";
-import { isVehicleBusy } from "./busyVehicles.js";
 
 // ==============================
 // Types
@@ -14,6 +13,8 @@ import { isVehicleBusy } from "./busyVehicles.js";
 export type ChooseNearestVehicleInput = {
   cityId: string;
   pickup: GeoPoint;
+  // Vehiculele cu o comandă activă (din baza de date) — nu primesc altă comandă.
+  busyVehicleIds?: ReadonlySet<string>;
   nowMs?: number;
 };
 
@@ -65,11 +66,12 @@ export function chooseNearestVehicle(input: ChooseNearestVehicleInput): ChooseNe
   const candidates = getOnlineVehicleLocations(cityId, nowMs);
   if (candidates.length === 0) return null;
 
+  const busy = input.busyVehicleIds;
   let best: { vehicleId: string; distanceMeters: number } | null = null;
 
   for (const c of candidates) {
     // vehiculele cu o comandă activă nu primesc altă comandă
-    if (isVehicleBusy(cityId, c.vehicleId)) continue;
+    if (busy?.has(c.vehicleId)) continue;
 
     const d = distanceMeters(input.pickup, c.point);
 

@@ -61,7 +61,8 @@ activă e roșie (`taxi-busy.png`), cea liberă galbenă; verificat pe producți
 pagina de comenzi + evenimentul „user a sunat dispeceratul"); **#104 închis** după verificarea și pe
 producție (`--base-url https://api.taxibaiamare.com`, 2026-11-14).
 **2026-11-14:** PR B livrat (PR #110) — API-ul ține minte vehiculele ocupate (listă în memorie, se pierde la
-restart; eliberare la COMPLETED/CANCELED); verificat local: comenzile eșuate apar cu FAILED + CALLED.
+restart; eliberare la COMPLETED/CANCELED; **înlocuit de baza de date la #26**); verificat local: comenzile eșuate apar
+cu FAILED + CALLED.
 Verificat și pe producție: comenzi live, FAILED + CALLED cu flotă mică.
 **2026-11-15:** furnizor de persistență decis: **Neon Postgres** (prin Vercel Marketplace), nu Supabase; Blob
 nu e necesar. Resursa `taxibaiamare` există (regiune `fra1`, plan Free la nivel de instalare). **`DATABASE_URL`
@@ -190,6 +191,9 @@ Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard
   Preview**, iar după orice schimbare de variabilă e nevoie de **Redeploy** (altfel „Auth proxy error"). Harta
   poate ieși goală pe Preview: tokenul Mapbox permite doar `ops.taxibaiamare.com` + localhost (403 pe tile-uri);
   nu se lărgește tokenul pentru `*.vercel.app` — harta se verifică pe producție, după merge.
+- **`POST /orders` și `PATCH /orders/:id/status` cer `DATABASE_URL`** (altfel 503). **Local folosește o bază
+  separată, nu cea de producție** — `sim:orders` scrie comenzi de test. Tranzițiile de status permise sunt în
+  `@taxi/shared` (`ORDER_STATUS_TRANSITIONS`).
 - Modulele `api/src/modules/drivers/` și `payments/` sunt stub-uri goale.
 - **Zero teste** în repo.
 - Aplicația **user va fi nativă (React Native)**, nu PWA, nu web. Nu există `app.taxibaiamare.com` în plan.

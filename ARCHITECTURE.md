@@ -19,7 +19,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
 | Runtime | **Node 24.x** (`.nvmrc` root + controlcenter, `engines`, CI; Vercel și Railway citesc `engines.node`) |
-| Persistență | **Neon Postgres** (prin Vercel Marketplace, regiune `fra1`) — tabela `orders` creată prin `npm run migrate` (`api/migrations/`, driver `pg`, `api/src/db/pool.ts`); **rutele nu o folosesc încă** (#26). Fără ORM, SQL simplu. Se persistă comenzile; pozițiile vehiculelor rămân în memorie (fără istoric) |
+| Persistență | **Neon Postgres** (prin Vercel Marketplace, regiune `fra1`) — tabela `orders` creată prin `npm run migrate` (`api/migrations/`, driver `pg`, `api/src/db/pool.ts`); `POST /orders` și `PATCH /orders/:id/status` scriu în ea (#26), **citirea (`GET`) vine la #27**. Fără ORM, SQL simplu. Se persistă comenzile; pozițiile vehiculelor rămân în memorie (fără istoric) |
 | Aplicație user (viitor) | React Native — nativ iOS + Android |
 
 ---
@@ -124,7 +124,8 @@ Orice eveniment nou se înregistrează acolo — altfel e respins.
 **Abonarea pe `driver:*` (wildcard) e imposibilă** până la WS multi-subiect (taxi-021).
 
 **Prezența vehiculelor:** in-memory, **TTL 60s**, alimentată prin `PATCH /dev/vehicles/*`.
-Se pierde la restart — ca tot restul stării.
+Se pierde la restart (pozițiile nu se persistă — decizie); vehiculele reapar după câteva secunde, când raportează din
+nou. Comenzile și vehiculele ocupate NU se pierd: sunt în baza de date.
 
 ---
 
@@ -321,7 +322,7 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 
 | Risc | Impact |
 | --- | --- |
-| **Zero persistență** | Orice restart de API = pierderea tuturor comenzilor și a prezenței vehiculelor. Nu e un edge case, e comportamentul normal actual. Blocantul #1 al produsului. |
+| **Pozițiile și prezența sunt doar în memorie** | Un restart de API golește harta câteva secunde, până când vehiculele raportează din nou. Decizie: pozițiile nu se persistă. Comenzile se salvează în bază (#26); **ele se pierd din pagina de comenzi la refresh până la #27/#32** (pagina nu citește încă din bază). |
 | **Railway: o singură replică** | Planul e plătit (din 2026-11-14), deci nu mai expiră. O repornire pierde totuși starea din memorie. |
 | **Ordinea de build shared → api/controlcenter** | Dacă cineva rulează build-urile în altă ordine (sau CI-ul se rescrie neglijent), typecheck-ul cade pe `dist` lipsă. |
 | **Token HMAC custom, nu JWT** | Funcționează, dar e cod propriu de securitate. Fără rotație automată, fără expirare standardizată, fără bibliotecă auditată în spate. |
@@ -340,10 +341,14 @@ Răspunsul la „ce se va strica, ce lipsește, ce e over-engineered".
 - **Date de test pentru controlcenter** (comenzi, evenimente „user a sunat dispeceratul”): `npm run sim:orders`
   (taxi-055 / #104, PR #109), verificat local și pe producție (#104 închis). Controlcenter-ul doar observă; nu
   are UI de creare a comenzilor.
-- **Vehicule ocupate — rezolvat parțial (PR #110):** `api/src/modules/dispatch/busyVehicles.ts` ține în memorie
-  vehiculul fiecărei comenzi active; `chooseNearestVehicle` sare peste ocupate; `PATCH /orders/:id/status` îl
-  eliberează la COMPLETED/CANCELED. Limite: se pierde la restart; fără expirare (o comandă care nu ajunge
-  COMPLETED/CANCELED ține mașina ocupată); PATCH nu validează tranzițiile. Persistența o va înlocui.
+- **Vehicule ocupate — rezolvat (#26):** „ocupat" = are o comandă activă în baza de date
+  (`listBusyVehicleIds`, `api/src/modules/orders/repository.ts`); nu se pierde la restart. Un index unic parțial
+  (`api/migrations/002_…`) garantează cel mult o comandă activă per vehicul și oprește cursa dintre comenzi
+  simultane (a doua primește următorul vehicul). `POST /orders` **salvează înainte să publice**; fără bază → 503.
+  `PATCH /orders/:id/status` aplică tranzițiile din `@taxi/shared` (`ORDER_STATUS_TRANSITIONS`): pereche
+  imposibilă → 400, `from` diferit de statusul real → 409, comandă necunoscută → 404. Rămas: fără expirare (o
+  comandă care nu ajunge COMPLETED/CANCELED ține mașina ocupată; comenzile fără mașină rămân NEW cu
+  `dispatch_failed_reason`).
   (Deploy-ul API-ului, taxi-049 / #95, e făcut: vezi §10.)
 - **Fără acceptare de cursă de către șofer** — dispecerizarea e finală. Tipurile există; emiterea nu.
 - **Fără pricing, fără plăți** — module stub goale.
