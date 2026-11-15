@@ -26,7 +26,7 @@ titlul `[PARCAT]` și rămân deschise.
 | Grup | Issue-uri active |
 |---|---|
 | Acces | ✅ taxi-048 (#93) parolă unică, direct pe hartă |
-| Observare live | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), ✅ 2026-11-14 taxi-055 (#104) simulator de comenzi (PR #109; verificat local și pe producție, #104 închis) |
+| Observare live | ✅ taxi-017 (#31), ✅ taxi-018 (#32, 2026-11-15), taxi-019 (#33), ✅ 2026-11-14 taxi-055 (#104) simulator de comenzi (PR #109; verificat local și pe producție, #104 închis) |
 | Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizor decis 2026-11-15: **Neon Postgres** (resursa creată; codul urmează) |
 | Siguranță | ✅ taxi-051 (#97) token obligatoriu pe toate rutele (acoperă esențialul din taxi-014/#28), taxi-035 (#49) teste, taxi-042 (#56) hardening |
 | Live | ✅ taxi-049 (#95) deploy API pe Railway + domeniu + env producție (2026-11-13) |
@@ -136,7 +136,7 @@ Scop: dispeceratul devine operațional — două pagini distincte, date care sup
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
 | 1 | taxi-017 Pagină comenzi separată + markeri PNG galben/roșu — **✅ 2026-11-14** (pagina montată + buton Hartă/Comenzi, PR #108; markere galben/roșu, PR #111, verificat pe producție; #31 închis) | #31 | P1 | controlcenter | — |
-| 2 | taxi-018 OpsOrdersPage pe snapshot + live WS | #32 | P1 | controlcenter | taxi-013, taxi-017 |
+| 2 | ✅ 2026-11-15 — taxi-018 OpsOrdersPage pe snapshot + live WS, căutare perioadă + indicativ, în română, layout cu bloc fix (PR #115; **#32 închis**) | #32 | P1 | controlcenter | taxi-013, taxi-017 |
 | 2 | taxi-019 Snapshot inițial pe hartă | #33 | P2 | controlcenter | taxi-013, taxi-016 |
 
 Paralel: 017 poate începe imediat (zero dependențe — milestone-ul curent); 018 ∥ 019 după 013.

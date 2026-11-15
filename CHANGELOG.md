@@ -12,6 +12,26 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-15 — taxi-018 (#32): pagina de comenzi din bază + live, căutare, în română (PR #115)
+
+`OpsOrdersPage` nu mai trăiește doar din evenimente: la deschidere cere cele mai noi 50 de comenzi (`GET /orders`,
+prin proxy-ul Next `pages/api/orders`) **după ce topicul WS e confirmat** (ca nimic să nu se piardă între poză și
+evenimente; la reconectare se reîncarcă), apoi aplică evenimentele peste ele. Un eveniment mai vechi decât starea din
+bază nu o dă înapoi; evenimentele pentru comenzi necunoscute se ignoră → **dispar rândurile cu coordonate 0,0** și
+pierderea comenzilor la refresh / deschidere târzie. Formular de căutare (De la / Până la / Indicativ, max 200,
+`hasMore` ca mesaj); în modul căutare evenimentele live nu mai modifică tabelul. Interfața în română (coloane,
+statusuri, dată `15.11.2026`); scoase coloanele `User`/`Notes` (mereu goale). **Feedback proprietar:** separatoare între
+coloane; rânduri verde pal (alocată/în cursă/finalizată) și roșu pal (fără mașină liberă) — tokeni noi
+`tintOk`/`tintFailed` în `@taxi/tokens`, regula în `rowTone`; pagina nu mai derulează: **bloc fix sus** (antet +
+căutare) cu **antetul coloanelor lipit** dedesubt, coloane cu lățime fixă (`table-layout: fixed`), conținut centrat
+vertical, margini aliniate, separator de 2px sub blocul fix; sub 1500px se ascund pastilele „pregătit"/„canal".
+**Limite cunoscute:** apelurile la dispecerat nu se salvează (coloana „Apel", cu numărul de telefon, neatinsă — de
+discutat); câmpurile `datetime-local` arată formatul browserului. Testat local (logică 27/27; browser 29/29, apoi
+34/34 și 40/40 la două dimensiuni de ecran, light + dark, build de producție), apoi pe producție 7/7. **Comenzile de
+test (43) au fost șterse din producție** la cererea proprietarului; baza e curată. **#32 închis.**
+
+---
+
 ## 2026-11-15 — taxi-013 (#27): GET /orders și GET /orders/:id (PR #114)
 
 `GET /orders`: `cityId` obligatoriu; `status` (listă cu virgulă), `vehicleId` (indicativ), `from`/`to` (ISO 8601

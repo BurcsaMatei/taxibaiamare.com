@@ -72,9 +72,13 @@ la proiectul Vercel** (controlcenter-ul nu se conectează la bază). **#25 livra
 (înainte să publice; fără bază → 503), „ocupat" se deduce din comenzile active (migrația `002`: o comandă activă
 per vehicul), `PATCH` validează tranzițiile (400/409/404). **#27 livrat (PR #114):** `GET /orders` (oraș obligatoriu;
 filtre status, indicativ, perioadă `from`/`to` cu fus orar; 50 implicit, max 200; `hasMore`) și `GET /orders/:id`;
-căutarea la plângere = perioadă + indicativ. **Pagina de comenzi încă nu folosește baza** (#32). **Doar comenzile se
-persistă; pozițiile vehiculelor rămân în memorie** (fără istoric de poziții — decizia proprietarului). Următorii:
-#32 (pagina de comenzi pe date din bază + live, etichete în română, formular de căutare), apoi #29/#30/#33.
+căutarea la plângere = perioadă + indicativ. **#32 livrat (PR #115):** pagina de comenzi încarcă comenzile din bază
+(50) + live, în română, cu formular de căutare (De la / Până la / Indicativ) în blocul fix de sus, antet de coloane
+lipit, coloane cu lățime fixă, rânduri verde/roșu pal; verificat pe producție. **Apelurile la dispecerat nu se
+salvează** (coloana „Apel" arată doar ce sosește cât e pagina deschisă; subiect de discutat cu telefonul). **Doar
+comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric de poziții — decizia proprietarului).
+**Comenzile de test au fost șterse din producție (2026-11-15); baza e curată.** Următorii: #29/#30/#33 (orașe și flotă
+din bază, snapshot inițial pe hartă) + discuția despre telefon.
 **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 
