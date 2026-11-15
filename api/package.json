@@ -16,12 +16,14 @@
   "type": "module",
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.1",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "@taxi/shared": "file:../packages/shared",
     "express": "^5.2.1",
+    "pg": "^8.23.1",
     "ws": "^8.19.0"
   }
 }

@@ -158,6 +158,7 @@ node --env-file=api/.env.local api/dist/index.js  # :3001 — API-ul nu încarc�
 npm run dev:controlcenter                         # :3000
 PASSWORD='…' npm run sim:fleet -- --city baia-mare --count 20  # simulator flotă (cere parola controlcenter); Ctrl+C = offline
 PASSWORD='…' npm run sim:orders -- --city baia-mare            # simulator comenzi (cere parola; rulează lângă sim:fleet); --base-url https://api.taxibaiamare.com pentru producție, --force-calls ca să vezi apelurile la dispecerat; Ctrl+C = anulează comenzile active
+DATABASE_URL='postgresql://…' npm run migrate     # aplică api/migrations/*.sql (o dată fiecare, în ordine); sau pune DATABASE_URL în api/.env.local. Migrațiile aplicate NU se editează — adaugi una nouă
 npm run typecheck                                 # toate workspace-urile
 npm -w controlcenter run check:all                # format:check + typecheck + lint
 ```
