@@ -19,6 +19,7 @@
     "sim:fleet": "tsx scripts/dev-simulate-fleet.ts",
     "sim:orders": "tsx scripts/dev-simulate-orders.ts",
     "hash:password": "tsx scripts/hash-password.ts",
+    "migrate": "tsx --env-file-if-exists=api/.env.local scripts/migrate.ts",
     "dev:all": "node scripts/dev-all.mjs",
     "tree": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1",
     "tree:control": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1 -Root controlcenter",
