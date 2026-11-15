@@ -27,7 +27,7 @@ titlul `[PARCAT]` și rămân deschise.
 |---|---|
 | Acces | ✅ taxi-048 (#93) parolă unică, direct pe hartă |
 | Observare live | taxi-017 (#31), taxi-018 (#32), taxi-019 (#33), ✅ 2026-11-14 taxi-055 (#104) simulator de comenzi (PR #109; verificat local și pe producție, #104 închis) |
-| Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizorul e în discuție (Neon + Blob în loc de Supabase) |
+| Persistență | taxi-011 (#25), taxi-012 (#26), taxi-013 (#27), taxi-015 (#29), taxi-016 (#30) — furnizor decis 2026-11-15: **Neon Postgres** (resursa creată; codul urmează) |
 | Siguranță | ✅ taxi-051 (#97) token obligatoriu pe toate rutele (acoperă esențialul din taxi-014/#28), taxi-035 (#49) teste, taxi-042 (#56) hardening |
 | Live | ✅ taxi-049 (#95) deploy API pe Railway + domeniu + env producție (2026-11-13) |
 | Igienă | taxi-040 (#54), taxi-041 (#55), taxi-054 (#103) scoate numărul de telefon din HUD |
@@ -49,7 +49,7 @@ pagina de comenzi, nici markerii nu pot fi verificați; fără „ocupat" în AP
 Secvența P1 în ordinea de execuție. Săgețile arată dependența directă; itemii de pe același rând pot rula în paralel.
 
 ```
-taxi-001 (#15) secrete ──→ taxi-003* (#17) env ──→ taxi-011 (#25) Supabase
+taxi-001 (#15) secrete ──→ taxi-003* (#17) env ──→ taxi-011 (#25) Neon
 taxi-002 (#16) CI          taxi-008 (#22) contracte   taxi-009 (#23) dedupe   taxi-017 (#31) pagini ops
                                     │
 taxi-011 ──→ taxi-012 (#26) persistare orders ──→ taxi-013 (#27) GET /orders ──→ taxi-018 (#32) orders UI
@@ -89,7 +89,7 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 | — | ✅ 2026-11-13 — taxi-048 Autentificare simplificată: parolă unică (scrypt) → direct pe hartă; branding Taxi Galant | #93 | P1 | api/controlcenter | — |
 
 Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând; 044 după 001+002+003.
-Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
+Deblochează: Faza 2 (baza de date are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
 Notă 044: API-ul (Express + WS, cu stare în memorie) NU rulează pe Vercel — rulează pe Railway, api.taxibaiamare.com (decizie 2026-11-13: Hetzner cerea verificare de identitate; vezi ARCHITECTURE §10); Vercel doar pentru controlcenter/driver/admin (user e app nativ React Native, distribuit prin App Store + Google Play — fără subdomeniu web).
 
 ### Faza 1 — Shared ca sursă de adevăr
@@ -106,17 +106,17 @@ Scop: contractele din `@taxi/shared` devin reale și complete înainte de a cons
 Paralel: 008 ∥ 009; faza întreagă poate rula în paralel cu Faza 0.
 Deblochează: taxi-012 (persistare pe contracte corecte), taxi-014, taxi-028, taxi-035.
 
-### Faza 2 — Persistență (furnizor în discuție: Supabase inițial; se evaluează Neon + Blob)
-Scop: platforma capătă memorie — comenzi, orașe și flotă în DB.
+### Faza 2 — Persistență (furnizor: **Neon Postgres**, decis 2026-11-15)
+Scop: platforma capătă memorie — comenzi, orașe și flotă în DB. **Pozițiile vehiculelor nu se persistă** (rămân în memorie; fără istoric de poziții).
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
-| 1 | taxi-011 Setup Supabase: proiect, schemă, env | #25 | P1 | api/infra | taxi-001, taxi-003 |
+| 1 | taxi-011 Setup Neon: resursă ✅ 2026-11-15 (`taxibaiamare`, fra1, Vercel Marketplace); rămân: `DATABASE_URL` pe Railway, driver, schemă/migrații | #25 | P1 | api/infra | taxi-001, taxi-003 |
 | 2 | taxi-012 Persistare orders (POST în DB, PATCH validat) | #26 | P1 | api | taxi-008, taxi-011 |
 | 3 | taxi-013 GET /orders + GET /orders/:id | #27 | P1 | api | taxi-012 |
 | 3 | ✅ 2026-11-13 — taxi-014 Auth pe rutele de scriere orders — **acoperit de taxi-051 (#97)**: token obligatoriu pe toate rutele; tenant check-ul pe oraș, obsolet după taxi-048 | #28 | P1 | api | taxi-009, taxi-012 |
-| 2 | taxi-015 Cities din Supabase | #29 | P2 | api | taxi-011 |
-| 2 | taxi-016 Vehicles/fleet din Supabase, multi-city | #30 | P2 | api | taxi-011 |
+| 2 | taxi-015 Cities din DB | #29 | P2 | api | taxi-011 |
+| 2 | taxi-016 Vehicles/fleet din DB, multi-city (doar directorul de flotă; pozițiile rămân în memorie) | #30 | P2 | api | taxi-011 |
 
 Paralel: după 011 → 012 ∥ 015 ∥ 016; după 012 → 013 ∥ 014.
 Deblochează: Faza 3 completă, auth user (taxi-020), pricing (taxi-038).
@@ -138,7 +138,7 @@ Scop: clientul există — se autentifică, comandă și își urmărește cursa
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
-| 1 | taxi-020 User auth (Supabase phone OTP) | #34 | P1 | api/shared | taxi-011 |
+| 1 | taxi-020 User auth (OTP pe telefon — furnizorul de auth se decide la timpul lui; Supabase Auth nu mai e implicit) | #34 | P1 | api/shared | taxi-011 |
 | 2 | taxi-021 WS multi-subiect (user/driver) | #35 | P1 | api | taxi-020 |
 | 1 | taxi-022 Scaffold workspace user/ — **React Native (iOS + Android), nu Next.js** | #36 | P1 | user | taxi-002 |
 | 3 | taxi-023 Flux creare comandă | #37 | P1 | user | taxi-012, taxi-014, taxi-020, taxi-022 |

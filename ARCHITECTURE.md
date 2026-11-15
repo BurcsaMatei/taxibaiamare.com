@@ -19,7 +19,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
 | Runtime | **Node 24.x** (`.nvmrc` root + controlcenter, `engines`, CI; Vercel și Railway citesc `engines.node`) |
-| Persistență | **niciuna încă** — furnizor în discuție (Supabase inițial; se evaluează Neon Postgres + Vercel Blob) |
+| Persistență | **Neon Postgres** (prin Vercel Marketplace, regiune `fra1`) — resursa există, **codul nu o folosește încă**. Fără ORM, SQL simplu. Se persistă comenzile; pozițiile vehiculelor rămân în memorie (fără istoric) |
 | Aplicație user (viitor) | React Native — nativ iOS + Android |
 
 ---

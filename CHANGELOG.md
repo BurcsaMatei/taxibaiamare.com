@@ -12,6 +12,22 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-15 — Furnizor de persistență: Neon Postgres (nu Supabase) — taxi-011 (#25), pas 1
+
+Decizie a proprietarului. **Motiv:** folosim doar Postgres — auth-ul (parolă unică) și realtime-ul (WS în API) sunt
+proprii, iar Storage nu e necesar, deci nu avem nevoie de restul ofertei Supabase; echipa folosește deja Neon pe
+alte proiecte, iar facturarea e unificată în Vercel. Fără ORM, SQL simplu → migrarea spre alt Postgres rămâne ieftină
+(`pg_dump` + schimbarea `DATABASE_URL`). Blob nu e necesar. **Pozițiile vehiculelor nu se persistă** (rămân în
+memorie, mișcarea live pe hartă nu e afectată; fără istoric de poziții — nu e în interesul proprietarului); se
+persistă comenzile și, ulterior, orașele și directorul de flotă.
+
+Făcut azi: resursa Neon `taxibaiamare` creată prin Vercel Marketplace (regiune `fra1`, aproape de Railway EU West),
+conectată la proiectul Vercel `taxibaiamare-com` pe Production + Preview. **Nu e făcut:** `DATABASE_URL` pe Railway
+(API-ul rulează acolo, nu pe Vercel), driverul, schema și migrațiile. Resursa e pe planul **Free**, care e la nivel
+de instalare (partajat cu celelalte proiecte Neon ale echipei) — de reevaluat înainte de utilizare reală.
+
+---
+
 ## 2026-11-14 — taxi-017 (#31): markere roșu/galben pe hartă (PR #111)
 
 Mașina cu o comandă activă (atribuită, nefinalizată) apare roșie (`taxi-busy.png`), cea liberă galbenă (`taxi.png`); offline nu apare. `OpsMapPage` calculează `busyVehicleIds` din evenimentele de comenzi, `OpsMapCanvas` alege imaginea cu o expresie Mapbox `case` după proprietatea `busy`. Verificat pe producție cu `sim:fleet --count 5` + `sim:orders` (harta e goală pe localhost/Preview din cauza restricției tokenului Mapbox). **#31 închis.** Nu există marker pentru comenzile FAILED (fără mașină): decizie de produs separată.

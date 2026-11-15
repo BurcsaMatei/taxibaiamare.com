@@ -87,7 +87,7 @@ Acestea sunt cerințe de produs neîndeplinite, nu idei:
 
 | Cerință | Blocant |
 | --- | --- |
-| **Comenzile să supraviețuiască unui refresh** | Nu există persistență — comenzile sunt doar evenimente efemere. Decizia luată: **Supabase**. Punct de intrare: taxi-011 (#25). |
+| **Comenzile să supraviețuiască unui refresh** | Nu există persistență — comenzile sunt doar evenimente efemere. Decizia luată (2026-11-15): **Neon Postgres**. Punct de intrare: taxi-011 (#25). |
 | Istoric de comenzi, rapoarte, facturare | Depinde de persistență |
 | Pasagerul să poată comanda | Aplicația user nu există |
 | Șoferul să accepte/refuze o cursă | Aplicația driver nu există |

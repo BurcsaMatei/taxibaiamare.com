@@ -61,7 +61,7 @@ Fără labels GitHub. Prioritatea trăiește în titlu.
 - Vanilla Extract — singurul sistem de styling permis
 - WebSocket (ws) pentru realtime
 - Mapbox pentru hartă
-- Supabase pentru persistență
+- Neon (Postgres, prin Vercel Marketplace) pentru persistență
 - Express 5 pentru API
 
 **Interzis:** Tailwind, CSS Modules, styled-components, inline styles permanente, App Router, ORM-uri (Prisma, Drizzle), shadcn, Radix, MUI, Chakra.
