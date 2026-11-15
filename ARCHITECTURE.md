@@ -19,7 +19,7 @@ Pentru ordinea de execuție → [`ROADMAP.md`](./ROADMAP.md).
 | Stiluri | **Vanilla Extract** (`styles/*.css.ts`), tokens din `@taxi/tokens` |
 | Limbaj | TypeScript strict, **fără `any`** |
 | Runtime | **Node 24.x** (`.nvmrc` root + controlcenter, `engines`, CI; Vercel și Railway citesc `engines.node`) |
-| Persistență | **Neon Postgres** (prin Vercel Marketplace, regiune `fra1`) — tabela `orders` creată prin `npm run migrate` (`api/migrations/`, driver `pg`, `api/src/db/pool.ts`); `POST /orders` și `PATCH /orders/:id/status` scriu în ea (#26), **citirea (`GET`) vine la #27**. Fără ORM, SQL simplu. Se persistă comenzile; pozițiile vehiculelor rămân în memorie (fără istoric) |
+| Persistență | **Neon Postgres** (prin Vercel Marketplace, regiune `fra1`) — tabela `orders` creată prin `npm run migrate` (`api/migrations/`, driver `pg`, `api/src/db/pool.ts`); `POST /orders` și `PATCH /orders/:id/status` scriu în ea (#26), `GET /orders` și `GET /orders/:id` o citesc (#27); **pagina de comenzi încă nu le folosește** (#32). Fără ORM, SQL simplu. Se persistă comenzile; pozițiile vehiculelor rămân în memorie (fără istoric) |
 | Aplicație user (viitor) | React Native — nativ iOS + Android |
 
 ---
@@ -71,6 +71,8 @@ Browserul **nu vorbește direct** cu Express pe HTTP — trece prin proxy-urile 
 | GET | `/cities` · `/cities/:cityId` | necesită Bearer token |
 | GET | `/health` | — |
 | POST | `/orders` | creează + dispecerizează sincron |
+| GET | `/orders` | lista unui oraș, cele mai noi primele. Parametri: `cityId` (obligatoriu), `status` (listă cu virgulă), `vehicleId` (indicativ), `from`/`to` (ISO 8601 **cu fus orar**; `from` inclusiv, `to` exclusiv), `limit` (implicit 50, max 200). Răspunde `{ orders, hasMore }`. Căutare la plângere: perioadă + indicativ |
+| GET | `/orders/:id` | o comandă după cod (404 dacă nu există / nu e uuid) |
 | PATCH | `/orders/:id/status` | tranziție de status |
 | POST | `/orders/:id/call` | — |
 | GET | `/dev/fleet/:cityId` · `/dev/fleet/:cityId/summary` | dev |
@@ -146,7 +148,7 @@ nou. Comenzile și vehiculele ocupate NU se pierd: sunt în baza de date.
 `packages/shared` — **niciodată local** în `api/` sau `controlcenter/`.
 
 ```
-contracts/orders.ts       CreateOrder* · PatchOrderStatus* · CallOrder*
+contracts/orders.ts       CreateOrder* · ListOrdersResponse · GetOrderResponse · PatchOrderStatus* · CallOrder*
 domain/auth.ts            ControlcenterTokenPayload · ControlcenterScope
 domain/city.ts            CityPublic (cu mapCenter / mapZoom)
 domain/driver.ts · geo.ts · order.ts · service.ts · status.ts · user.ts · vehicle.ts

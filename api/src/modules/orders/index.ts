@@ -6,6 +6,8 @@
 import type { Express } from "express";
 import crypto from "node:crypto";
 import {
+  LIST_ORDERS_DEFAULT_LIMIT,
+  LIST_ORDERS_MAX_LIMIT,
   canTransitionOrderStatus,
   makeOrderAssignedEnvelope,
   makeOrderCreatedEnvelope,
@@ -21,6 +23,8 @@ import type {
   CreateOrderRequest,
   CreateOrderResponse,
   GeoPoint,
+  GetOrderResponse,
+  ListOrdersResponse,
   OrderCallSource,
   OrderCallTarget,
   OrderStatus,
@@ -34,11 +38,14 @@ import { publishStrict } from "../realtime/index.js";
 import { getPool } from "../../db/pool.js";
 import { chooseNearestVehicle } from "../dispatch/index.js";
 import {
+  getOrderById,
   insertOrder,
   isOrderId,
   isUniqueViolation,
   listBusyVehicleIds,
+  listOrders,
   transitionOrderStatus,
+  type OrderListFilter,
   type TransitionResult,
 } from "./repository.js";
 
@@ -54,6 +61,89 @@ const MAX_ASSIGN_ATTEMPTS = 5;
 function logDbError(where: string, e: unknown): void {
   // eslint-disable-next-line no-console
   console.error(`[orders] ${where}: ${e instanceof Error ? e.message : String(e)}`);
+}
+
+// Un instant ISO 8601 CU fus orar (Z sau ±hh:mm). Fără fus, ora ar depinde de serverul care o citește.
+const ISO_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+
+function parseInstant(v: unknown): Date | null {
+  if (typeof v !== "string") return null;
+
+  // Într-un URL, un `+` necodat ajunge ca spațiu („…T20:00:00 03:00"): îl reparăm.
+  const s = v.trim().replace(/ (\d{2}:\d{2})$/, "+$1");
+  if (!ISO_WITH_OFFSET.test(s)) return null;
+
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+type ListQueryResult = { ok: true; filter: OrderListFilter } | { ok: false; error: string };
+
+// Parametrii pentru GET /orders (vezi contracts/orders.ts). Guard-uri scrise de mână, fără bibliotecă de validare.
+function parseListQuery(query: Record<string, unknown>): ListQueryResult {
+  const cityId = typeof query.cityId === "string" ? query.cityId.trim() : "";
+  if (!cityId) return { ok: false, error: "cityId required" };
+
+  const filter: OrderListFilter = { cityId, limit: LIST_ORDERS_DEFAULT_LIMIT };
+
+  if (query.status !== undefined) {
+    const raw = Array.isArray(query.status) ? query.status : [query.status];
+    const statuses: OrderStatus[] = [];
+
+    for (const item of raw) {
+      if (typeof item !== "string") return { ok: false, error: "invalid status" };
+
+      for (const part of item.split(",")) {
+        const text = part.trim();
+        if (text.length === 0) continue;
+
+        const status = normalizeOrderStatus(text);
+        if (!status) return { ok: false, error: `invalid status: ${text}` };
+        statuses.push(status);
+      }
+    }
+
+    if (statuses.length > 0) filter.statuses = statuses;
+  }
+
+  if (query.vehicleId !== undefined) {
+    if (typeof query.vehicleId !== "string") return { ok: false, error: "invalid vehicleId" };
+    const vehicleId = query.vehicleId.trim();
+    if (vehicleId.length > 0) filter.vehicleId = vehicleId;
+  }
+
+  const timeError = (name: string): string =>
+    `${name} must be ISO 8601 with timezone, e.g. 2026-10-28T20:00:00+03:00 (encode + as %2B in a URL)`;
+
+  if (typeof query.from === "string" && query.from.trim().length > 0) {
+    const from = parseInstant(query.from);
+    if (!from) return { ok: false, error: timeError("from") };
+    filter.from = from;
+  } else if (query.from !== undefined && typeof query.from !== "string") {
+    return { ok: false, error: timeError("from") };
+  }
+
+  if (typeof query.to === "string" && query.to.trim().length > 0) {
+    const to = parseInstant(query.to);
+    if (!to) return { ok: false, error: timeError("to") };
+    filter.to = to;
+  } else if (query.to !== undefined && typeof query.to !== "string") {
+    return { ok: false, error: timeError("to") };
+  }
+
+  if (filter.from && filter.to && filter.from.getTime() >= filter.to.getTime()) {
+    return { ok: false, error: "from must be before to" };
+  }
+
+  if (query.limit !== undefined) {
+    const text = typeof query.limit === "string" ? query.limit.trim() : "";
+    if (!/^\d+$/.test(text) || Number.parseInt(text, 10) < 1) {
+      return { ok: false, error: "limit must be a positive integer" };
+    }
+    filter.limit = Math.min(Number.parseInt(text, 10), LIST_ORDERS_MAX_LIMIT);
+  }
+
+  return { ok: true, filter };
 }
 
 function isGeoPoint(v: unknown): v is GeoPoint {
@@ -106,6 +196,61 @@ function normalizePhone(v: unknown): string | null {
 // Module
 // ==============================
 export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
+  // ✅ citire: comenzile unui oraș, cele mai noi primele, cu filtre (status, vehicul, perioadă) — vezi
+  // contracts/orders.ts. Pentru căutări: perioada + indicativul vehiculului.
+  app.get("/orders", async (req, res) => {
+    const parsed = parseListQuery(req.query);
+    if (!parsed.ok) {
+      res.status(400).json({ ok: false, error: parsed.error });
+      return;
+    }
+
+    const pool = getPool();
+    if (!pool) {
+      res.status(503).json({ ok: false, error: "database not configured" });
+      return;
+    }
+
+    try {
+      const { orders, hasMore } = await listOrders(pool, parsed.filter);
+      const payload: ListOrdersResponse = { ok: true, orders, hasMore };
+      res.status(200).json(payload);
+    } catch (e) {
+      logDbError("GET /orders", e);
+      res.status(503).json({ ok: false, error: "database unavailable" });
+    }
+  });
+
+  app.get("/orders/:id", async (req, res) => {
+    const orderId = String(req.params.id || "").trim();
+
+    // Un id care nu e uuid nu poate exista în bază.
+    if (!isOrderId(orderId)) {
+      res.status(404).json({ ok: false, error: "order not found" });
+      return;
+    }
+
+    const pool = getPool();
+    if (!pool) {
+      res.status(503).json({ ok: false, error: "database not configured" });
+      return;
+    }
+
+    try {
+      const order = await getOrderById(pool, orderId);
+      if (!order) {
+        res.status(404).json({ ok: false, error: "order not found" });
+        return;
+      }
+
+      const payload: GetOrderResponse = { ok: true, order };
+      res.status(200).json(payload);
+    } catch (e) {
+      logDbError("GET /orders/:id", e);
+      res.status(503).json({ ok: false, error: "database unavailable" });
+    }
+  });
+
   app.post("/orders", async (req, res) => {
     const body = req.body as unknown;
 
