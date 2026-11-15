@@ -62,7 +62,7 @@ când nu sunt mașini libere (toate ocupate), iar controlcenter-ul vede evenimen
 | HUD cu starea flotei | ✅ funcțional |
 | Comutare între orașe (city switcher), pentru operatorii HQ | ✅ funcțional |
 | Actualizare în timp real, cu reconectare automată la pierderea conexiunii | ✅ funcțional |
-| **Pagina de comenzi — listă, filtrare, acțiuni** | ✅ montată (2026-11-14); fără date până la simulator (vezi §5) |
+| **Pagina de comenzi — listă, filtrare, acțiuni** | ✅ montată; din #32 citește comenzile din baza de date + live, cu căutare după perioadă și indicativ, în română (vezi §5) |
 | Atribuire manuală a unei comenzi către un vehicul | ❌ nu există — **în afara scopului actual** (controlcenter-ul doar observă; taxi-050 / #96, parcat) |
 
 ### 3.2 Reguli de business stabilite
@@ -87,10 +87,10 @@ Acestea sunt cerințe de produs neîndeplinite, nu idei:
 
 | Cerință | Blocant |
 | --- | --- |
-| **Comenzile să supraviețuiască unui refresh** | Nu există persistență — comenzile sunt doar evenimente efemere. Decizia luată (2026-11-15): **Neon Postgres**. Punct de intrare: taxi-011 (#25). |
+| **Comenzile să supraviețuiască unui refresh** | ✅ Rezolvat (#25–#27, #32): comenzile se salvează în Neon Postgres, iar pagina de comenzi le încarcă la deschidere. Apelurile la dispecerat nu se salvează. |
 | Istoric de comenzi, rapoarte, facturare | Depinde de persistență |
 | **Ce vrem să vedem despre o comandă** (decis 2026-11-15) | Controlcenter-ul doar observă evenimentele și trebuie să identifice corect comanda: **data, ora, adresa de preluare, adresa de lăsare, numele clientului, emailul clientului, statusul**. **Fără număr de telefon, fără observații sau alte câmpuri editabile, fără câmpuri de dispecerat clasic** (linie, stand etc. — tabela dispeceratului clasic a fost doar un exemplu al proprietarului, nu o cerință). Tabela `orders` de la #25 are doar coloanele care există în cod azi (data și ora vin din `created_at`); adresele, numele și emailul se adaugă prin migrații **când evenimentele din aplicații le aduc** (azi `POST /orders` primește doar coordonate). Etichetele din interfață: în română. Orice altă extindere se face doar la nevoie. |
-| **Găsirea unei comenzi la o plângere** | La dispeceratul clasic se caută după **dată, oră și indicativ** (și, cândva, după număr de telefon). Prin API există din #27: `GET /orders` cu perioadă (`from`/`to`) + `vehicleId`, rezultatul fiind o listă din care se alege comanda. **Butonul/formularul din pagină vine la #32.** Căutarea după telefon, nume sau email **nu se poate** (nu le salvăm; se adaugă când apar în evenimente). |
+| **Găsirea unei comenzi la o plângere** | La dispeceratul clasic se caută după **dată, oră și indicativ** (și, cândva, după număr de telefon). Prin API există din #27: `GET /orders` cu perioadă (`from`/`to`) + `vehicleId`, rezultatul fiind o listă din care se alege comanda. **Formularul din pagina de comenzi (De la / Până la / Indicativ) există din #32.** Căutarea după telefon, nume sau email **nu se poate** (nu le salvăm; se adaugă când apar în evenimente). |
 | **Istoric pentru user și driver** | Fiecare își va vedea comenzile lui, deci `orders` va avea nevoie de `userId` și `driverId` (migrații noi) și de rute „comenzile mele". Vine odată cu aplicațiile user/driver; nu se face acum. |
 | Pasagerul să poată comanda | Aplicația user nu există |
 | Șoferul să accepte/refuze o cursă | Aplicația driver nu există |
@@ -121,11 +121,10 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 
 **Ce nu funcționează:**
 
-- **Persistența există doar pe scriere (#26).** Comenzile se salvează în baza de date și supraviețuiesc unui
-  restart, dar pagina de comenzi nu le citește încă (#27, #32): după un refresh, lista afișată tot e goală.
-- **Pagina de comenzi e montată** din 2026-11-14 (PR #108, taxi-017 pas 1), cu buton Hartă / Comenzi. Fără
-  persistență arată doar ce se întâmplă cât e deschisă; datele de test vin din `npm run sim:orders`
-  (taxi-055 / #104, PR #109). Harta arată mașinile cu comandă activă în roșu, cele libere în galben (#31, PR #111).
+- **Apelurile la dispecerat nu se salvează în bază.** Coloana „Apel" din pagina de comenzi arată doar apelurile
+  primite cât pagina e deschisă; după un refresh dispar. (Subiect de discutat odată cu rolul telefonului.)
+- **Pagina de comenzi** (montată din 2026-11-14, PR #108) citește din #32 comenzile din baza de date și le
+  completează live; datele de test vin din `npm run sim:orders` (taxi-055 / #104, PR #109). Harta arată mașinile cu comandă activă în roșu, cele libere în galben (#31, PR #111).
 - **API-ul e deployat** (Railway, `api.taxibaiamare.com`, din 2026-11-13, taxi-049 / #95): login-ul
   funcționează pe producție, harta se încarcă, WS conectat. **Nu există șoferi/vehicule reale:** cele 250
   de vehicule din Baia Mare sunt offline până rulează simulatorul sau apare aplicația driver. Planul

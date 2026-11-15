@@ -3,8 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import type { GeoPoint, OrderStatus, RealtimeEnvelope } from "@taxi/shared";
-import { isActiveOrderStatus, topics } from "@taxi/shared";
+import type { Order, RealtimeEnvelope } from "@taxi/shared";
+import { isActiveOrderStatus, LIST_ORDERS_MAX_LIMIT, topics } from "@taxi/shared";
 import * as React from "react";
 
 import {
@@ -12,6 +12,7 @@ import {
   getStoredControlcenterToken,
   isControlcenterTokenExpired,
 } from "../../../lib/auth/controlcenterAuth";
+import { fetchOrders, type OrdersQuery } from "../../../lib/orders/ordersClient";
 import { useControlcenterTopicEvents } from "../../../lib/realtime/controlcenterWs";
 import * as hud from "../../../styles/ops/opsHudTop.css";
 import * as t from "../../../styles/ops/opsOrders.css";
@@ -19,12 +20,35 @@ import ThemeSwitcher from "../../ThemeSwitcher";
 import OpsLoginGate from "../auth/OpsLoginGate";
 import OpsCitySwitcher from "../cities/OpsCitySwitcher";
 import OpsPageNav from "../OpsPageNav";
+import type {
+  OrderRow,
+  OrderSearchCriteria,
+  VehiclePoint,
+  VehiclePresence,
+  VehicleUiStatus,
+} from "./opsOrders.types";
+import {
+  buildLiveRows,
+  computeVehicleOnlineNow,
+  dispatchDetailRo,
+  fmtPoint,
+  getVehiclePoint,
+  getVehiclePresence,
+  orderToRow,
+  parseIsoMs,
+  rowTone,
+  STATUS_LABEL_RO,
+  toDateTimeParts,
+  VEHICLE_STATUS_LABEL_RO,
+} from "./opsOrders.utils";
+import OpsOrdersSearchBar from "./OpsOrdersSearchBar";
 
 // ==============================
 // Constante
 // ==============================
-const ONLINE_TTL_MS = 60_000;
 const EMPTY_EVENTS: ReadonlyArray<RealtimeEnvelope> = [];
+const EMPTY_ORDERS: ReadonlyArray<Order> = [];
+const PAGE_TITLE = "CENTRU DE CONTROL / COMENZI";
 
 // ==============================
 // Types
@@ -33,371 +57,20 @@ export type OpsOrdersPageProps = {
   cityId: string;
 };
 
-type DispatchFail = {
-  orderId: string;
-  reason: string;
-  ts: string;
+// Starea cererilor poartă orașul pentru care a fost făcută: la schimbarea orașului, un rezultat vechi pur și
+// simplu nu se mai potrivește și dispare, fără să resetăm nimic din efecte.
+type SnapshotData = { cityId: string; orders: ReadonlyArray<Order> };
+
+type CityMessage = { cityId: string; message: string };
+
+type SearchResult = {
+  cityId: string;
+  rows: OrderRow[];
+  hasMore: boolean;
 };
 
-type CallSnap = {
-  orderId: string;
-  phoneNumber: string;
-  source: string;
-  ts: string;
-};
-
-type OrderRow = {
-  orderId: string;
-  createdAtIso: string;
-  updatedAtIso: string;
-  status: OrderStatus;
-
-  userId: string | null;
-  notes: string | null;
-  indicativ: string | null;
-
-  dispatch: "OK" | "FAILED" | "—";
-  dispatchReason: string | null;
-
-  calledAtIso: string | null;
-  calledPhone: string | null;
-  calledSource: string | null;
-
-  pickup: GeoPoint;
-  dropoff: GeoPoint;
-};
-
-type VehiclePoint = {
-  vehicleId: string;
-  ts: string;
-};
-
-type VehiclePresence = {
-  vehicleId: string;
-  online: boolean;
-  ts: string;
-};
-
-type OrderAssigned = {
-  orderId: string;
-  vehicleId: string;
-  ts: string;
-};
-
-type OrderStatusSnap = {
-  orderId: string;
-  status: OrderStatus;
-  ts: string;
-};
-
-type VehicleUiStatus = "OFFLINE" | "AVAILABLE" | "BUSY";
-
-// ==============================
-// Utils
-// ==============================
-function toDateTimeParts(iso: string): { date: string; time: string } {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return { date: iso, time: "" };
-
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-
-  return { date: `${y}-${m}-${dd}`, time: `${hh}:${mm}:${ss}` };
-}
-
-function fmtPoint(p: GeoPoint): string {
-  return `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
-}
-
-function parseIsoMs(iso: string): number {
-  const ms = Date.parse(iso);
-  return Number.isFinite(ms) ? ms : Date.now();
-}
-
-function getVehiclePoint(e: RealtimeEnvelope, cityId: string): VehiclePoint | null {
-  if (e.name !== "vehicle.locationUpdated") return null;
-  if (e.payload.cityId !== cityId) return null;
-  return { vehicleId: e.payload.vehicleId, ts: e.ts };
-}
-
-function getVehiclePresence(e: RealtimeEnvelope, cityId: string): VehiclePresence | null {
-  if (e.name !== "vehicle.presenceChanged") return null;
-  if (e.payload.cityId !== cityId) return null;
-  return { vehicleId: e.payload.vehicleId, online: e.payload.online, ts: e.ts };
-}
-
-function getOrderAssigned(e: RealtimeEnvelope, cityId: string): OrderAssigned | null {
-  if (e.name !== "order.assigned") return null;
-  if (e.payload.cityId !== cityId) return null;
-  return { orderId: e.payload.orderId, vehicleId: e.payload.vehicleId, ts: e.ts };
-}
-
-function getOrderStatusSnap(e: RealtimeEnvelope, cityId: string): OrderStatusSnap | null {
-  if (e.name === "order.created") {
-    if (e.payload.cityId !== cityId) return null;
-    return { orderId: e.payload.orderId, status: e.payload.status, ts: e.ts };
-  }
-
-  if (e.name === "order.statusChanged") {
-    if (e.payload.cityId !== cityId) return null;
-    return { orderId: e.payload.orderId, status: e.payload.toStatus, ts: e.ts };
-  }
-
-  return null;
-}
-
-function getDispatchFail(e: RealtimeEnvelope, cityId: string): DispatchFail | null {
-  if (e.name !== "order.dispatchFailed") return null;
-
-  const payload = e.payload as unknown;
-  if (!payload || typeof payload !== "object") return null;
-
-  const p = payload as { orderId?: unknown; cityId?: unknown; reason?: unknown };
-  if (p.cityId !== cityId) return null;
-  if (typeof p.orderId !== "string" || p.orderId.trim().length === 0) return null;
-
-  const reason = typeof p.reason === "string" && p.reason.trim().length > 0 ? p.reason : "UNKNOWN";
-  return { orderId: p.orderId, reason, ts: e.ts };
-}
-
-function getCallSnap(e: RealtimeEnvelope, cityId: string): CallSnap | null {
-  if (e.name !== "order.userCalledDispatch") return null;
-
-  const payload = e.payload as unknown;
-  if (!payload || typeof payload !== "object") return null;
-
-  const p = payload as {
-    orderId?: unknown;
-    cityId?: unknown;
-    phoneNumber?: unknown;
-    source?: unknown;
-  };
-
-  if (p.cityId !== cityId) return null;
-  if (typeof p.orderId !== "string" || p.orderId.trim().length === 0) return null;
-
-  const phoneNumber = typeof p.phoneNumber === "string" ? p.phoneNumber.trim() : "";
-  const source = typeof p.source === "string" ? p.source.trim() : "";
-  if (!phoneNumber) return null;
-
-  return { orderId: p.orderId, phoneNumber, source: source || "USER_APP", ts: e.ts };
-}
-
-function applyEnvelopeToRows(
-  map: Map<string, OrderRow>,
-  env: RealtimeEnvelope,
-  cityId: string,
-): void {
-  if (env.name === "order.created") {
-    if (env.payload.cityId !== cityId) return;
-
-    const { orderId, pickup, dropoff, status } = env.payload;
-
-    map.set(orderId, {
-      orderId,
-      createdAtIso: env.ts,
-      updatedAtIso: env.ts,
-      status,
-
-      userId: null,
-      notes: null,
-      indicativ: null,
-
-      dispatch: "—",
-      dispatchReason: null,
-
-      calledAtIso: null,
-      calledPhone: null,
-      calledSource: null,
-
-      pickup,
-      dropoff,
-    });
-
-    return;
-  }
-
-  if (env.name === "order.dispatchFailed") {
-    const f = getDispatchFail(env, cityId);
-    if (!f) return;
-
-    const prev = map.get(f.orderId);
-    if (!prev) {
-      map.set(f.orderId, {
-        orderId: f.orderId,
-        createdAtIso: f.ts,
-        updatedAtIso: f.ts,
-        status: "NEW",
-
-        userId: null,
-        notes: null,
-        indicativ: null,
-
-        dispatch: "FAILED",
-        dispatchReason: f.reason,
-
-        calledAtIso: null,
-        calledPhone: null,
-        calledSource: null,
-
-        pickup: { lat: 0, lng: 0 },
-        dropoff: { lat: 0, lng: 0 },
-      });
-      return;
-    }
-
-    map.set(f.orderId, {
-      ...prev,
-      updatedAtIso: f.ts,
-      dispatch: "FAILED",
-      dispatchReason: f.reason,
-    });
-
-    return;
-  }
-
-  if (env.name === "order.userCalledDispatch") {
-    const c = getCallSnap(env, cityId);
-    if (!c) return;
-
-    const prev = map.get(c.orderId);
-    if (!prev) {
-      map.set(c.orderId, {
-        orderId: c.orderId,
-        createdAtIso: c.ts,
-        updatedAtIso: c.ts,
-        status: "NEW",
-
-        userId: null,
-        notes: null,
-        indicativ: null,
-
-        dispatch: "—",
-        dispatchReason: null,
-
-        calledAtIso: c.ts,
-        calledPhone: c.phoneNumber,
-        calledSource: c.source,
-
-        pickup: { lat: 0, lng: 0 },
-        dropoff: { lat: 0, lng: 0 },
-      });
-      return;
-    }
-
-    map.set(c.orderId, {
-      ...prev,
-      updatedAtIso: c.ts,
-      calledAtIso: c.ts,
-      calledPhone: c.phoneNumber,
-      calledSource: c.source,
-    });
-
-    return;
-  }
-
-  if (env.name === "order.assigned") {
-    if (env.payload.cityId !== cityId) return;
-
-    const { orderId, vehicleId } = env.payload;
-    const prev = map.get(orderId);
-
-    if (!prev) {
-      map.set(orderId, {
-        orderId,
-        createdAtIso: env.ts,
-        updatedAtIso: env.ts,
-        status: "NEW",
-
-        userId: null,
-        notes: null,
-        indicativ: vehicleId,
-
-        dispatch: "OK",
-        dispatchReason: null,
-
-        calledAtIso: null,
-        calledPhone: null,
-        calledSource: null,
-
-        pickup: { lat: 0, lng: 0 },
-        dropoff: { lat: 0, lng: 0 },
-      });
-      return;
-    }
-
-    map.set(orderId, {
-      ...prev,
-      updatedAtIso: env.ts,
-      indicativ: vehicleId,
-      dispatch: "OK",
-      dispatchReason: null,
-    });
-
-    return;
-  }
-
-  if (env.name === "order.statusChanged") {
-    if (env.payload.cityId !== cityId) return;
-
-    const { orderId, toStatus } = env.payload;
-    const prev = map.get(orderId);
-
-    if (!prev) {
-      map.set(orderId, {
-        orderId,
-        createdAtIso: env.ts,
-        updatedAtIso: env.ts,
-        status: toStatus,
-
-        userId: null,
-        notes: null,
-        indicativ: null,
-
-        dispatch: "—",
-        dispatchReason: null,
-
-        calledAtIso: null,
-        calledPhone: null,
-        calledSource: null,
-
-        pickup: { lat: 0, lng: 0 },
-        dropoff: { lat: 0, lng: 0 },
-      });
-      return;
-    }
-
-    map.set(orderId, {
-      ...prev,
-      updatedAtIso: env.ts,
-      status: toStatus,
-    });
-  }
-}
-
-function computeVehicleOnlineNow(
-  vehicleId: string,
-  nowMs: number,
-  latestPointById: Map<string, VehiclePoint>,
-  latestPresenceById: Map<string, VehiclePresence>,
-): boolean {
-  const p = latestPointById.get(vehicleId);
-  if (!p) return false;
-
-  const pMs = parseIsoMs(p.ts);
-  if (nowMs - pMs > ONLINE_TTL_MS) return false;
-
-  const pres = latestPresenceById.get(vehicleId);
-  if (pres) {
-    const presMs = parseIsoMs(pres.ts);
-    if (pres.online === false && nowMs - presMs <= ONLINE_TTL_MS) return false;
-  }
-
-  return true;
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : "eroare necunoscută";
 }
 
 // ==============================
@@ -456,8 +129,96 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
   const lastError = wsEnabled ? ws.lastError : null;
   const eventsSafe = wsEnabled ? ws.events : EMPTY_EVENTS;
 
+  // Abonat = serverul a confirmat topicul. De aici încolo orice comandă nouă ajunge prin evenimente,
+  // deci poza din baza de date se cere abia acum: ce s-a întâmplat înainte e în poză, ce urmează e în evenimente.
+  const subscribed = wsEnabled && ws.topic === topic;
+
   // ------------------------------
-  // Derived maps (hooks UNCONDITIONAL)
+  // Poza din baza de date (modul live)
+  // ------------------------------
+  const [snapshotData, setSnapshotData] = React.useState<SnapshotData | null>(null);
+  const [snapshotErr, setSnapshotErr] = React.useState<CityMessage | null>(null);
+  const [reloadTick, setReloadTick] = React.useState(0);
+  const snapshotSeq = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!subscribed || !token) return;
+
+    snapshotSeq.current += 1;
+    const seq = snapshotSeq.current;
+
+    fetchOrders(token, { cityId })
+      .then((page) => {
+        if (seq !== snapshotSeq.current) return;
+        setSnapshotData({ cityId, orders: page.orders });
+        setSnapshotErr(null);
+      })
+      .catch((e: unknown) => {
+        if (seq !== snapshotSeq.current) return;
+        setSnapshotErr({ cityId, message: errorMessage(e) });
+      });
+  }, [subscribed, token, cityId, reloadTick]);
+
+  const reloadSnapshot = React.useCallback(() => {
+    setSnapshotErr(null);
+    setReloadTick((n) => n + 1);
+  }, []);
+
+  const snapshotOrders =
+    snapshotData && snapshotData.cityId === cityId ? snapshotData.orders : null;
+  const snapshotFailure = snapshotErr && snapshotErr.cityId === cityId ? snapshotErr.message : null;
+  const snapshotLoading = snapshotOrders === null && snapshotFailure === null;
+
+  // ------------------------------
+  // Căutare (perioadă + indicativ)
+  // ------------------------------
+  const [searchResult, setSearchResult] = React.useState<SearchResult | null>(null);
+  const [searchErr, setSearchErr] = React.useState<CityMessage | null>(null);
+  const [searchBusy, setSearchBusy] = React.useState(false);
+  const searchSeq = React.useRef(0);
+
+  const activeSearch = searchResult && searchResult.cityId === cityId ? searchResult : null;
+  const searchError = searchErr && searchErr.cityId === cityId ? searchErr.message : null;
+
+  const runSearch = React.useCallback(
+    (criteria: OrderSearchCriteria) => {
+      if (!token) return;
+
+      searchSeq.current += 1;
+      const seq = searchSeq.current;
+
+      const query: OrdersQuery = { cityId, limit: LIST_ORDERS_MAX_LIMIT };
+      if (criteria.from) query.from = criteria.from;
+      if (criteria.to) query.to = criteria.to;
+      if (criteria.vehicleId) query.vehicleId = criteria.vehicleId;
+
+      setSearchBusy(true);
+      setSearchErr(null);
+
+      fetchOrders(token, query)
+        .then((page) => {
+          if (seq !== searchSeq.current) return;
+          setSearchResult({ cityId, rows: page.orders.map(orderToRow), hasMore: page.hasMore });
+          setSearchBusy(false);
+        })
+        .catch((e: unknown) => {
+          if (seq !== searchSeq.current) return;
+          setSearchErr({ cityId, message: errorMessage(e) });
+          setSearchBusy(false);
+        });
+    },
+    [token, cityId],
+  );
+
+  const resetSearch = React.useCallback(() => {
+    searchSeq.current += 1;
+    setSearchResult(null);
+    setSearchErr(null);
+    setSearchBusy(false);
+  }, []);
+
+  // ------------------------------
+  // Derived (hooks UNCONDITIONAL)
   // ------------------------------
   const nowMs = Date.now();
 
@@ -489,70 +250,30 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
     return byId;
   }, [cityId, eventsSafe]);
 
-  const latestAssignedByOrderId = React.useMemo(() => {
-    const byOrder = new Map<string, OrderAssigned>();
+  const liveRows = React.useMemo(
+    () => buildLiveRows(snapshotOrders ?? EMPTY_ORDERS, eventsSafe, cityId),
+    [snapshotOrders, eventsSafe, cityId],
+  );
 
-    for (const e of eventsSafe) {
-      const a = getOrderAssigned(e, cityId);
-      if (!a) continue;
-
-      const prev = byOrder.get(a.orderId);
-      if (!prev || parseIsoMs(a.ts) >= parseIsoMs(prev.ts)) byOrder.set(a.orderId, a);
-    }
-
-    return byOrder;
-  }, [cityId, eventsSafe]);
-
-  const latestStatusByOrderId = React.useMemo(() => {
-    const byOrder = new Map<string, OrderStatusSnap>();
-
-    for (const e of eventsSafe) {
-      const s2 = getOrderStatusSnap(e, cityId);
-      if (!s2) continue;
-
-      const prev = byOrder.get(s2.orderId);
-      if (!prev || parseIsoMs(s2.ts) >= parseIsoMs(prev.ts)) byOrder.set(s2.orderId, s2);
-    }
-
-    return byOrder;
-  }, [cityId, eventsSafe]);
-
+  // Un vehicul e ocupat dacă are o comandă activă (din bază sau din evenimente).
   const busyVehicleIds = React.useMemo(() => {
     const busy = new Set<string>();
 
-    for (const a of latestAssignedByOrderId.values()) {
-      const st = latestStatusByOrderId.get(a.orderId);
-      const status = st?.status ?? "ASSIGNED";
-      if (isActiveOrderStatus(status)) busy.add(a.vehicleId);
+    for (const r of liveRows) {
+      if (r.indicativ && isActiveOrderStatus(r.status)) busy.add(r.indicativ);
     }
 
     return busy;
-  }, [latestAssignedByOrderId, latestStatusByOrderId]);
+  }, [liveRows]);
 
-  const rows = React.useMemo(() => {
-    const map = new Map<string, OrderRow>();
+  const searching = activeSearch !== null;
+  const rows: ReadonlyArray<OrderRow> = activeSearch ? activeSearch.rows : liveRows;
 
-    for (const e of eventsSafe) {
-      if (
-        e.name !== "order.created" &&
-        e.name !== "order.statusChanged" &&
-        e.name !== "order.assigned" &&
-        e.name !== "order.dispatchFailed" &&
-        e.name !== "order.userCalledDispatch"
-      )
-        continue;
-
-      applyEnvelopeToRows(map, e, cityId);
-    }
-
-    const list = Array.from(map.values());
-    list.sort((a, b) => (a.updatedAtIso < b.updatedAtIso ? 1 : -1));
-    return list;
-  }, [cityId, eventsSafe]);
-
+  // Starea vehiculului contează doar pentru o comandă activă, în modul live (prezența vine din evenimente).
+  // Pentru o comandă încheiată sau în rezultate de căutare, un „Offline" ar induce în eroare.
   const getVehicleStatusForRow = React.useCallback(
     (r: OrderRow): VehicleUiStatus | "—" => {
-      if (!r.indicativ) return "—";
+      if (searching || !r.indicativ || !isActiveOrderStatus(r.status)) return "—";
 
       const online = computeVehicleOnlineNow(
         r.indicativ,
@@ -564,185 +285,205 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
 
       return busyVehicleIds.has(r.indicativ) ? "BUSY" : "AVAILABLE";
     },
-    [busyVehicleIds, latestPointById, latestPresenceById, nowMs],
+    [searching, busyVehicleIds, latestPointById, latestPresenceById, nowMs],
   );
 
   // ------------------------------
   // Render (AFTER hooks)
   // ------------------------------
   if (!wsEnabled) {
-    return <OpsLoginGate title="CONTROL CENTER / ORDERS" />;
+    return <OpsLoginGate title={PAGE_TITLE} />;
   }
+
+  const emptyText = searching
+    ? "Nicio comandă găsită pentru criteriile alese."
+    : snapshotLoading
+      ? "Se încarcă comenzile…"
+      : "Nicio comandă de afișat.";
 
   return (
     <main className={hud.page}>
-      <header className={hud.topHud} aria-label="Orders HUD">
-        <div className={hud.brand}>
-          <div className={hud.brandTitle}>Taxi Galant</div>
-          <div className={hud.pageTitle}>CONTROL CENTER / ORDERS</div>
-        </div>
-
-        <div className={hud.right}>
-          <div className={hud.pills}>
-            <span className={hud.pill}>
-              <span className={`${hud.dot} ${connected ? hud.dotOn : ""}`} aria-hidden="true" />
-              {connected ? "CONNECTED" : "DISCONNECTED"}
-            </span>
-
-            <span className={hud.pillMuted}>ready {ready ? "true" : "false"}</span>
-            <span className={hud.pillMuted}>
-              city <span className={hud.mono}>{cityId}</span>
-            </span>
-            <span className={hud.pillMuted}>
-              topic <span className={hud.mono}>{topic}</span>
-            </span>
-
-            <span className={hud.pillMuted}>error {lastError ?? "—"}</span>
+      <div className={hud.headStack}>
+        <header className={hud.topHud} aria-label="Comenzi">
+          <div className={hud.brand}>
+            <div className={hud.brandTitle}>Taxi Galant</div>
+            <div className={hud.pageTitle}>{PAGE_TITLE}</div>
           </div>
 
-          <OpsPageNav cityId={cityId} current="orders" />
+          <div className={hud.right}>
+            <div className={hud.pills}>
+              <span className={hud.pill}>
+                <span className={`${hud.dot} ${connected ? hud.dotOn : ""}`} aria-hidden="true" />
+                {connected ? "CONECTAT" : "DECONECTAT"}
+              </span>
 
-          {isHq && token ? (
-            <OpsCitySwitcher authToken={token} currentCityId={cityId} mode="orders" />
-          ) : null}
+              <span className={`${hud.pillMuted} ${hud.hideNarrow}`}>
+                pregătit {ready ? "da" : "nu"}
+              </span>
+              <span className={hud.pillMuted}>
+                oraș <span className={hud.mono}>{cityId}</span>
+              </span>
+              <span className={`${hud.pillMuted} ${hud.hideNarrow}`}>
+                canal <span className={hud.mono}>{topic}</span>
+              </span>
 
-          <ThemeSwitcher />
+              <span className={hud.pillMuted}>eroare {lastError ?? "—"}</span>
+            </div>
+
+            <OpsPageNav cityId={cityId} current="orders" />
+
+            {isHq && token ? (
+              <OpsCitySwitcher authToken={token} currentCityId={cityId} mode="orders" />
+            ) : null}
+
+            <ThemeSwitcher />
+          </div>
+        </header>
+
+        <div className={t.searchRow}>
+          <OpsOrdersSearchBar
+            busy={searchBusy}
+            active={searching}
+            onSearch={runSearch}
+            onReset={resetSearch}
+          />
+
+          <div className={t.statusLine} aria-live="polite">
+            {searchError ? (
+              <span className={t.notice} role="alert">
+                Căutarea a eșuat: {searchError}
+              </span>
+            ) : null}
+
+            {activeSearch ? (
+              <span className={t.notice}>
+                Rezultate căutare: {activeSearch.rows.length}{" "}
+                {activeSearch.rows.length === 1 ? "comandă" : "comenzi"}.
+                {activeSearch.hasMore
+                  ? ` Mai există rezultate dincolo de limita de ${LIST_ORDERS_MAX_LIMIT}: restrânge perioada sau adaugă indicativul.`
+                  : ""}
+              </span>
+            ) : null}
+
+            {!searching && snapshotFailure ? (
+              <span className={t.notice} role="alert">
+                Nu am putut încărca comenzile din baza de date ({snapshotFailure}). Apar doar
+                comenzile noi, în timp real.
+                <button type="button" className={t.button} onClick={reloadSnapshot}>
+                  Reîncearcă
+                </button>
+              </span>
+            ) : null}
+          </div>
         </div>
-      </header>
+      </div>
 
-      <section className={hud.tableArea} aria-label="Realtime orders table" data-full-bleed="true">
+      <section className={hud.tableArea} aria-label="Tabelul comenzilor" data-full-bleed="true">
         <div className={t.tableWrapFullBleed}>
-          {rows.length === 0 ? (
-            <div className={t.empty}>No events yet. Trimite POST /orders pe API.</div>
-          ) : (
-            <table className={t.table}>
-              <thead className={t.thead}>
-                <tr>
-                  <th className={t.th}>Date</th>
-                  <th className={t.th}>Time</th>
-                  <th className={t.th}>User</th>
-                  <th className={t.th}>Pickup</th>
-                  <th className={t.th}>Dropoff</th>
-                  <th className={t.th}>Notes</th>
-                  <th className={t.th}>Indicativ</th>
-                  <th className={t.th}>Vehicle</th>
-                  <th className={t.th}>Dispatch</th>
-                  <th className={t.th}>Call</th>
-                  <th className={t.th}>Order</th>
-                  <th className={t.th}>Status</th>
-                  <th className={t.th}>Updated</th>
-                </tr>
-              </thead>
+          <table className={t.table}>
+            <colgroup>
+              <col className={t.colWidth.date} />
+              <col className={t.colWidth.time} />
+              <col className={t.colWidth.pickup} />
+              <col className={t.colWidth.dropoff} />
+              <col className={t.colWidth.indicativ} />
+              <col className={t.colWidth.vehicle} />
+              <col className={t.colWidth.dispatch} />
+              <col className={t.colWidth.call} />
+              <col className={t.colWidth.order} />
+              <col className={t.colWidth.status} />
+              <col className={t.colWidth.updated} />
+            </colgroup>
 
-              <tbody>
-                {rows.map((r) => {
-                  const created = toDateTimeParts(r.createdAtIso);
-                  const updated = toDateTimeParts(r.updatedAtIso);
-                  const vStatus = getVehicleStatusForRow(r);
-                  const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
+            <thead className={t.thead}>
+              <tr>
+                <th className={t.th}>Data</th>
+                <th className={t.th}>Ora</th>
+                <th className={t.th}>Preluare</th>
+                <th className={t.th}>Destinație</th>
+                <th className={t.th}>Indicativ</th>
+                <th className={t.th}>Vehicul</th>
+                <th className={t.th}>Dispecerat</th>
+                <th className={t.th}>Apel</th>
+                <th className={t.th}>Comandă</th>
+                <th className={t.th}>Status</th>
+                <th className={t.th}>Actualizat</th>
+              </tr>
+            </thead>
 
-                  return (
-                    <tr key={r.orderId} className={t.trHover}>
-                      <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
-                      <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
+            <tbody>
+              {rows.map((r) => {
+                const created = toDateTimeParts(r.createdAtIso);
+                const updated = toDateTimeParts(r.updatedAtIso);
+                const vStatus = getVehicleStatusForRow(r);
+                const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
+                const dispatchDetail = dispatchDetailRo(r.dispatchReason);
+                const tone = rowTone(r);
+                const toneClass = tone === "ok" ? t.rowOk : tone === "failed" ? t.rowFailed : "";
 
-                      <td className={t.td}>
+                return (
+                  <tr key={r.orderId} className={`${t.trHover} ${toneClass}`}>
+                    <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
+
+                    <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.pickup)}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.dropoff)}</td>
+
+                    <td className={`${t.td} ${t.cellMono}`}>{r.indicativ ?? "—"}</td>
+
+                    <td className={t.td}>
+                      {vStatus === "—" ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : (
+                        <span className={t.badge}>{VEHICLE_STATUS_LABEL_RO[vStatus]}</span>
+                      )}
+                    </td>
+
+                    <td className={t.td}>
+                      {r.dispatch === "—" ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : r.dispatch === "OK" ? (
+                        <span className={t.badge}>Alocat</span>
+                      ) : (
                         <div className={t.rowSplit}>
-                          <span className={t.cellMono}>{r.userId ?? "—"}</span>
-                          <span className={t.small}>future: userId</span>
+                          <span className={t.badge}>Fără mașină liberă</span>
+                          {dispatchDetail ? (
+                            <span className={t.small}>{dispatchDetail}</span>
+                          ) : null}
                         </div>
-                      </td>
+                      )}
+                    </td>
 
-                      <td className={t.td}>
+                    <td className={t.td}>
+                      {!called ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : (
                         <div className={t.rowSplit}>
-                          <span className={t.cellMono}>{fmtPoint(r.pickup)}</span>
-                          <span className={t.small}>pickup</span>
-                        </div>
-                      </td>
-
-                      <td className={t.td}>
-                        <div className={t.rowSplit}>
-                          <span className={t.cellMono}>{fmtPoint(r.dropoff)}</span>
-                          <span className={t.small}>dropoff</span>
-                        </div>
-                      </td>
-
-                      <td className={t.td}>
-                        <div className={t.rowSplit}>
-                          <span className={t.cellMono}>{r.notes ?? "—"}</span>
-                          <span className={t.small}>future: notes</span>
-                        </div>
-                      </td>
-
-                      <td className={t.td}>
-                        <div className={t.rowSplit}>
-                          <span className={t.cellMono}>{r.indicativ ?? "—"}</span>
-                          <span className={t.small}>realtime: order.assigned</span>
-                        </div>
-                      </td>
-
-                      <td className={t.td}>
-                        {vStatus === "—" ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : (
-                          <span className={t.badge}>
-                            <span className={t.cellMono}>{vStatus}</span>
+                          <span className={t.badge}>Sunat</span>
+                          <span className={t.small}>
+                            {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
+                            {r.calledSource ?? "USER_APP"}
                           </span>
-                        )}
-                      </td>
+                        </div>
+                      )}
+                    </td>
 
-                      <td className={t.td}>
-                        {r.dispatch === "—" ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : r.dispatch === "OK" ? (
-                          <span className={t.badge}>
-                            <span className={t.cellMono}>OK</span>
-                          </span>
-                        ) : (
-                          <div className={t.rowSplit}>
-                            <span className={t.badge}>
-                              <span className={t.cellMono}>FAILED</span>
-                            </span>
-                            <span className={t.small}>
-                              {r.dispatchReason ?? "NO_AVAILABLE_VEHICLE"}
-                            </span>
-                          </div>
-                        )}
-                      </td>
+                    <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
 
-                      <td className={t.td}>
-                        {!called ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : (
-                          <div className={t.rowSplit}>
-                            <span className={t.badge}>
-                              <span className={t.cellMono}>CALLED</span>
-                            </span>
-                            <span className={t.small}>
-                              {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
-                              {r.calledSource ?? "USER_APP"}
-                            </span>
-                          </div>
-                        )}
-                      </td>
+                    <td className={t.td}>
+                      <span className={t.badge}>{STATUS_LABEL_RO[r.status]}</span>
+                    </td>
 
-                      <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>
+                      {updated.date} {updated.time}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-                      <td className={t.td}>
-                        <span className={t.badge}>
-                          <span className={t.cellMono}>{r.status}</span>
-                        </span>
-                      </td>
-
-                      <td className={`${t.td} ${t.cellMono}`}>
-                        {updated.date} {updated.time}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+          {rows.length === 0 ? <div className={t.empty}>{emptyText}</div> : null}
         </div>
       </section>
     </main>

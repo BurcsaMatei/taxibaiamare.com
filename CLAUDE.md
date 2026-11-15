@@ -188,7 +188,8 @@ Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard
 
 - **Doar `baia-mare` are flotă** (250 vehicule sintetice). În celelalte 4 orașe, dispecerizarea eșuează —
   e așteptat, nu e bug.
-- **Pagina de comenzi e montată** (PR #108); fără date arată „No events yet" (date de test: `sim:orders`).
+- **Pagina de comenzi** încarcă comenzile din `GET /orders` + live (#32); date de test: `sim:orders`. Apelurile
+  la dispecerat nu se salvează (coloana „Apel" arată doar ce sosește cât e pagina deschisă).
   Harta colorează mașinile: galben = liberă, roșu = cu comandă activă (PR #111). Harta e goală pe
   localhost/Preview (token Mapbox) — se verifică pe producție.
 - **Preview Vercel:** `TAXI_API_BASE_URL` și `NEXT_PUBLIC_TAXI_WS_URL` trebuie bifate pe **Production și

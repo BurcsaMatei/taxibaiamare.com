@@ -33,6 +33,10 @@ export const vars = createThemeContract({
     cardBg: null,
     cardText: null,
 
+    // nuanțe translucide pentru rânduri de tabel: OK (verde) / eșec (roșu); se pun peste fundalul tabelului
+    tintOk: null,
+    tintFailed: null,
+
     shadow: null,
   },
 
@@ -86,6 +90,9 @@ export const themeClassLight = createTheme(vars, {
 
     cardBg: "#ffffff",
     cardText: "#111111",
+
+    tintOk: "rgba(46, 160, 67, 0.16)",
+    tintFailed: "rgba(218, 54, 51, 0.14)",
 
     shadow: "rgb(0 0 0)",
   },
@@ -151,6 +158,9 @@ export const themeClassDark = createTheme(vars, {
 
     cardBg: "#111215",
     cardText: "#f5f5f5",
+
+    tintOk: "rgba(63, 185, 80, 0.20)",
+    tintFailed: "rgba(248, 81, 73, 0.22)",
 
     shadow: "rgb(0 0 0)",
   },
