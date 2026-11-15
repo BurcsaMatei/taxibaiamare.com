@@ -121,6 +121,15 @@ Scop: platforma capătă memorie — comenzi, orașe și flotă în DB. **Poziț
 Paralel: după 011 → 012 ∥ 015 ∥ 016; după 012 → 013 ∥ 014.
 Deblochează: Faza 3 completă, auth user (taxi-020), pricing (taxi-038).
 
+**Decizii pentru schema `orders` (2026-11-15, #25):** coloane minime, doar ce există în cod azi — `id`, `city_id`,
+`service`, `status`, `pickup_lat/lng`, `dropoff_lat/lng`, `assigned_vehicle_id`, `dispatch_failed_reason`,
+`created_at`, `updated_at`. Se salvează și comenzile fără mașină (FAILED). Doar starea curentă; **fără tabelă de
+istoric/evenimente** deocamdată (de reevaluat la #32). **Nu se adaugă acum, dar trebuie adăugate prin migrații când
+apar aplicațiile/fluxul telefonic:** `userId`, telefonul clientului, prețuri, adrese scrise, șofer, plus câmpurile
+dispeceratului clasic (linie, nume client, observații editabile, indicativ, timpul dat de șofer, stand) — vezi
+`PRD.md` (cerințe neîndeplinite). Migrațiile: fișiere `.sql` numerotate în `api/migrations/` + `npm run migrate`;
+driver `pg` (după OK explicit).
+
 ### Faza 3 — Controlcenter complet
 Scop: dispeceratul devine operațional — două pagini distincte, date care supraviețuiesc refresh-ului.
 

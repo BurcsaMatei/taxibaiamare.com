@@ -89,6 +89,7 @@ Acestea sunt cerințe de produs neîndeplinite, nu idei:
 | --- | --- |
 | **Comenzile să supraviețuiască unui refresh** | Nu există persistență — comenzile sunt doar evenimente efemere. Decizia luată (2026-11-15): **Neon Postgres**. Punct de intrare: taxi-011 (#25). |
 | Istoric de comenzi, rapoarte, facturare | Depinde de persistență |
+| **Câmpurile dispeceratului clasic (telefon)** — de adăugat în tabela `orders` când ajungem la aplicații / flux telefonic | Tabela `orders` de la #25 are intenționat doar coloanele care există în cod azi. Proprietarul lucrează la un dispecerat clasic cu tabelă: data, ora, linia (din cele 8), strada (adresa), nume, obs (editabile), ind (indicativ), timpul dat de șofer, numele standului de unde a preluat comanda. Se adaugă prin migrații noi, nu acum. **Interfața (etichetele din pagina de comenzi) trebuie să fie în română.** Neclar încă (decizie de produs): dacă aceste date vin din comenzi introduse de un dispecer sau din aplicații — principiul 2026-11-13 spune că controlcenter-ul nu creează comenzi. |
 | Pasagerul să poată comanda | Aplicația user nu există |
 | Șoferul să accepte/refuze o cursă | Aplicația driver nu există |
 | Calcul de preț și plată | Modulele `pricing` și `payments` sunt stub-uri goale |
