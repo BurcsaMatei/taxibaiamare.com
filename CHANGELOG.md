@@ -12,6 +12,20 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-15 — taxi-011 (#25): driver `pg`, migrații SQL, tabela `orders` (PR #112)
+
+`pg` + `@types/pg` în `api`; `api/src/db/pool.ts` (`createPool`, `sslmode=verify-full` explicit, handler pentru
+conexiuni idle închise de server); `npm run migrate` (`scripts/migrate.ts`) aplică `api/migrations/*.sql` în ordine,
+o dată fiecare, cu lock pe tranzacție și sumă de control — oprește dacă o migrație aplicată a fost editată
+(**regulă: migrațiile aplicate nu se editează, se adaugă una nouă**). `001_create_orders.sql`: coloane minime
+(`id`, `city_id`, `service`, `status`, `pickup_lat/lng`, `dropoff_lat/lng`, `assigned_vehicle_id`,
+`dispatch_failed_reason`, `created_at`, `updated_at`), `CHECK` pe `service`/`status` (oglindesc `@taxi/shared`; la
+schimbare, migrație nouă), index `(city_id, created_at desc)`. Testat pe o bază temporară Neon (ștearsă), apoi
+aplicată pe `neondb` de producție: tabela există, goală. Nicio rută schimbată; deploy Railway + Vercel reușit,
+`/health` 200. **#25 închis.** Nu e făcut: rutele nu citesc/scriu încă în bază (#26, #27).
+
+---
+
 ## 2026-11-15 — Furnizor de persistență: Neon Postgres (nu Supabase) — taxi-011 (#25), pas 1
 
 Decizie a proprietarului. **Motiv:** folosim doar Postgres — auth-ul (parolă unică) și realtime-ul (WS în API) sunt

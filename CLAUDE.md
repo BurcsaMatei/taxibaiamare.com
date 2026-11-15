@@ -66,8 +66,10 @@ Verificat și pe producție: comenzi live, FAILED + CALLED cu flotă mică.
 **2026-11-15:** furnizor de persistență decis: **Neon Postgres** (prin Vercel Marketplace), nu Supabase; Blob
 nu e necesar. Resursa `taxibaiamare` există (regiune `fra1`, plan Free la nivel de instalare). **`DATABASE_URL`
 (pooled) e setată pe Railway**, conexiunea a fost verificată (Postgres 18, bază goală); resursa **nu mai e conectată
-la proiectul Vercel** (controlcenter-ul nu se conectează la bază). **Niciun cod nu folosește încă baza.** **Doar comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric
-de poziții — decizia proprietarului). Următorii: #25 → #26 → #27, apoi #29/#30/#32/#33.
+la proiectul Vercel** (controlcenter-ul nu se conectează la bază). **#25 livrat (PR #112):** driver `pg`, `npm run migrate`, migrația
+`001_create_orders.sql` aplicată pe producție (tabela `orders` există, goală). **API-ul încă nu scrie/citește comenzi** (vine la #26).
+**Doar comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric de poziții — decizia
+proprietarului). Următorii: #26 → #27, apoi #29/#30/#32/#33.
 **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.
 

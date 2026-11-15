@@ -111,7 +111,7 @@ Scop: platforma capătă memorie — comenzi, orașe și flotă în DB. **Poziț
 
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
-| 1 | taxi-011 Setup Neon: resursă ✅ 2026-11-15 (`taxibaiamare`, fra1, Vercel Marketplace); `DATABASE_URL` pe Railway ✅ (conexiune verificată); rămân: driver `pg`, schemă/migrații | #25 | P1 | api/infra | taxi-001, taxi-003 |
+| 1 | ✅ 2026-11-15 — taxi-011 Setup Neon: resursă `taxibaiamare` (fra1), `DATABASE_URL` pe Railway, driver `pg`, `npm run migrate`, `001_create_orders.sql` aplicată pe producție (PR #112; **#25 închis**) | #25 | P1 | api/infra | taxi-001, taxi-003 |
 | 2 | taxi-012 Persistare orders (POST în DB, PATCH validat) | #26 | P1 | api | taxi-008, taxi-011 |
 | 3 | taxi-013 GET /orders + GET /orders/:id | #27 | P1 | api | taxi-012 |
 | 3 | ✅ 2026-11-13 — taxi-014 Auth pe rutele de scriere orders — **acoperit de taxi-051 (#97)**: token obligatoriu pe toate rutele; tenant check-ul pe oraș, obsolet după taxi-048 | #28 | P1 | api | taxi-009, taxi-012 |
