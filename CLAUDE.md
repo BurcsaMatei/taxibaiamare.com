@@ -64,9 +64,9 @@ producție (`--base-url https://api.taxibaiamare.com`, 2026-11-14).
 restart; eliberare la COMPLETED/CANCELED); verificat local: comenzile eșuate apar cu FAILED + CALLED.
 Verificat și pe producție: comenzi live, FAILED + CALLED cu flotă mică.
 **2026-11-15:** furnizor de persistență decis: **Neon Postgres** (prin Vercel Marketplace), nu Supabase; Blob
-nu e necesar. Resursa `taxibaiamare` există (regiune `fra1`, plan Free la nivel de instalare), conectată la
-proiectul Vercel `taxibaiamare-com` pe Production + Preview; **API-ul de pe Railway nu are încă `DATABASE_URL`**
-și niciun cod nu o folosește. **Doar comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric
+nu e necesar. Resursa `taxibaiamare` există (regiune `fra1`, plan Free la nivel de instalare). **`DATABASE_URL`
+(pooled) e setată pe Railway**, conexiunea a fost verificată (Postgres 18, bază goală); resursa **nu mai e conectată
+la proiectul Vercel** (controlcenter-ul nu se conectează la bază). **Niciun cod nu folosește încă baza.** **Doar comenzile se persistă; pozițiile vehiculelor rămân în memorie** (fără istoric
 de poziții — decizia proprietarului). Următorii: #25 → #26 → #27, apoi #29/#30/#32/#33.
 **Railway e pe plan plătit** (trecut din trial la 2026-11-14).
 Detalii deploy → `ARCHITECTURE.md` §10; produs → `PRD.md` §5.

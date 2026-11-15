@@ -21,9 +21,11 @@ alte proiecte, iar facturarea e unificată în Vercel. Fără ORM, SQL simplu �
 memorie, mișcarea live pe hartă nu e afectată; fără istoric de poziții — nu e în interesul proprietarului); se
 persistă comenzile și, ulterior, orașele și directorul de flotă.
 
-Făcut azi: resursa Neon `taxibaiamare` creată prin Vercel Marketplace (regiune `fra1`, aproape de Railway EU West),
-conectată la proiectul Vercel `taxibaiamare-com` pe Production + Preview. **Nu e făcut:** `DATABASE_URL` pe Railway
-(API-ul rulează acolo, nu pe Vercel), driverul, schema și migrațiile. Resursa e pe planul **Free**, care e la nivel
+Făcut azi: resursa Neon `taxibaiamare` creată prin Vercel Marketplace (regiune `fra1`, aproape de Railway EU West).
+`DATABASE_URL` (pooled) setată pe Railway, unde rulează API-ul; conexiunea verificată (Postgres 18, bază goală, API
+`/health` 200 după redeploy). Resursa a fost conectată temporar la proiectul Vercel `taxibaiamare-com` doar ca să
+obținem connection string-ul, apoi **deconectată** (controlcenter-ul nu folosește baza; variabilele Neon Auth
+nefolosite au fost șterse înainte). **Nu e făcut:** driverul, schema și migrațiile. Resursa e pe planul **Free**, care e la nivel
 de instalare (partajat cu celelalte proiecte Neon ale echipei) — de reevaluat înainte de utilizare reală.
 
 ---
