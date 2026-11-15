@@ -6,7 +6,7 @@
 import type { Express } from "express";
 import crypto from "node:crypto";
 import {
-  isFinalOrderStatus,
+  canTransitionOrderStatus,
   makeOrderAssignedEnvelope,
   makeOrderCreatedEnvelope,
   makeOrderDispatchFailedEnvelope,
@@ -31,12 +31,31 @@ import type {
 
 import type { RealtimeHub } from "../realtime/wsServer.js";
 import { publishStrict } from "../realtime/index.js";
-import { markVehicleBusy, releaseVehicleOfOrder } from "../dispatch/busyVehicles.js";
+import { getPool } from "../../db/pool.js";
 import { chooseNearestVehicle } from "../dispatch/index.js";
+import {
+  insertOrder,
+  isOrderId,
+  isUniqueViolation,
+  listBusyVehicleIds,
+  transitionOrderStatus,
+  type TransitionResult,
+} from "./repository.js";
+
+// ==============================
+// Constants
+// ==============================
+// De câte ori încercăm următorul vehicul când altă comandă l-a luat între timp (vezi migrația 002).
+const MAX_ASSIGN_ATTEMPTS = 5;
 
 // ==============================
 // Utils
 // ==============================
+function logDbError(where: string, e: unknown): void {
+  // eslint-disable-next-line no-console
+  console.error(`[orders] ${where}: ${e instanceof Error ? e.message : String(e)}`);
+}
+
 function isGeoPoint(v: unknown): v is GeoPoint {
   return (
     !!v &&
@@ -87,7 +106,7 @@ function normalizePhone(v: unknown): string | null {
 // Module
 // ==============================
 export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
-  app.post("/orders", (req, res) => {
+  app.post("/orders", async (req, res) => {
     const body = req.body as unknown;
 
     if (!body || typeof body !== "object") {
@@ -115,14 +134,66 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
 
     const cityId = b.cityId.trim();
     const orderId = crypto.randomUUID();
+    const pickup = b.pickup;
+    const dropoff = b.dropoff;
 
     // ✅ default: NEW
     const createdStatus: OrderStatus = "NEW";
 
-    const nearest = chooseNearestVehicle({
-      cityId,
-      pickup: b.pickup,
-    });
+    const pool = getPool();
+    if (!pool) {
+      res.status(503).json({ ok: false, error: "database not configured" });
+      return;
+    }
+
+    // Salvăm ÎNAINTE să publicăm: ce vede controlcenter-ul live există întotdeauna în bază.
+    // Baza decide ce vehicule sunt ocupate. Dacă două comenzi simultane aleg același vehicul, indexul
+    // unic (migrația 002) o respinge pe a doua, iar noi încercăm următorul vehicul.
+    let nearest: { vehicleId: string; distanceMeters: number } | null = null;
+
+    try {
+      const busyVehicleIds = await listBusyVehicleIds(pool, cityId);
+
+      for (let attempt = 0; attempt < MAX_ASSIGN_ATTEMPTS; attempt += 1) {
+        const candidate = chooseNearestVehicle({ cityId, pickup, busyVehicleIds });
+        if (!candidate) break;
+
+        try {
+          await insertOrder(pool, {
+            id: orderId,
+            cityId,
+            service,
+            status: "ASSIGNED",
+            pickup,
+            dropoff,
+            assignedVehicleId: candidate.vehicleId,
+            dispatchFailedReason: null,
+          });
+          nearest = candidate;
+          break;
+        } catch (e) {
+          if (!isUniqueViolation(e)) throw e;
+          busyVehicleIds.add(candidate.vehicleId);
+        }
+      }
+
+      if (!nearest) {
+        await insertOrder(pool, {
+          id: orderId,
+          cityId,
+          service,
+          status: "NEW",
+          pickup,
+          dropoff,
+          assignedVehicleId: null,
+          dispatchFailedReason: "NO_AVAILABLE_VEHICLE",
+        });
+      }
+    } catch (e) {
+      logDbError("POST /orders", e);
+      res.status(503).json({ ok: false, error: "database unavailable" });
+      return;
+    }
 
     const assignedVehicleId = nearest ? nearest.vehicleId : null;
 
@@ -163,9 +234,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    // 2b) dacă avem alocare: vehiculul devine ocupat, apoi emit order.assigned + order.statusChanged NEW->ASSIGNED
-    markVehicleBusy(cityId, assignedVehicleId, orderId);
-
+    // 2b) dacă avem alocare (vehiculul e deja ocupat în bază): emit order.assigned + order.statusChanged NEW->ASSIGNED
     const envAssigned = makeOrderAssignedEnvelope({
       orderId,
       cityId,
@@ -257,7 +326,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
     res.status(200).json(payload);
   });
 
-  app.patch("/orders/:id/status", (req, res) => {
+  app.patch("/orders/:id/status", async (req, res) => {
     const orderId = String(req.params.id || "").trim();
     if (orderId.length === 0) {
       res.status(400).json({ ok: false, error: "orderId required" });
@@ -285,16 +354,59 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    const service = normalizeService(b.service ?? "TAXI");
-    if (!service) {
+    // `service` din cerere rămâne opțional; dacă e trimis, trebuie să fie valid. Folosim serviciul salvat în bază.
+    if (b.service !== undefined && !normalizeService(b.service)) {
       res.status(400).json({ ok: false, error: "invalid service" });
       return;
     }
 
     const cityId = b.cityId.trim();
 
-    // comandă încheiată -> vehiculul ei se eliberează
-    if (isFinalOrderStatus(to)) releaseVehicleOfOrder(orderId);
+    // Schimbările imposibile (ex. din COMPLETED) se resping fără să atingem baza.
+    if (!canTransitionOrderStatus(from, to)) {
+      res.status(400).json({ ok: false, error: `transition not allowed: ${from} -> ${to}` });
+      return;
+    }
+
+    // Un id care nu e uuid nu poate exista în bază.
+    if (!isOrderId(orderId)) {
+      res.status(404).json({ ok: false, error: "order not found" });
+      return;
+    }
+
+    const pool = getPool();
+    if (!pool) {
+      res.status(503).json({ ok: false, error: "database not configured" });
+      return;
+    }
+
+    let result: TransitionResult;
+    try {
+      result = await transitionOrderStatus(pool, { orderId, cityId, from, to });
+    } catch (e) {
+      logDbError("PATCH /orders/:id/status", e);
+      res.status(503).json({ ok: false, error: "database unavailable" });
+      return;
+    }
+
+    if (result.kind === "not_found") {
+      res.status(404).json({ ok: false, error: "order not found" });
+      return;
+    }
+
+    if (result.kind === "conflict") {
+      res
+        .status(409)
+        .json({ ok: false, error: `order status is ${result.actualStatus}, expected ${from}` });
+      return;
+    }
+
+    // Vehiculul unei comenzi încheiate se eliberează singur: „ocupat" = are o comandă activă în bază.
+    const service = normalizeService(result.service);
+    if (!service) {
+      res.status(500).json({ ok: false, error: "invalid stored service" });
+      return;
+    }
 
     const env = makeOrderStatusChangedEnvelope({
       orderId,

@@ -32,6 +32,21 @@ export const FINAL_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatu
   "CANCELED",
 ]);
 
+// Tranziții permise (sursa unică; API-ul le aplică la PATCH /orders/:id/status).
+// Statusurile finale nu mai pot fi schimbate. DISPATCHING există în tip, dar fluxul de azi nu îl folosește.
+export const ORDER_STATUS_TRANSITIONS: Readonly<Record<OrderStatus, ReadonlyArray<OrderStatus>>> = {
+  NEW: ["ASSIGNED", "CANCELED"],
+  DISPATCHING: [],
+  ASSIGNED: ["IN_PROGRESS", "CANCELED"],
+  IN_PROGRESS: ["COMPLETED", "CANCELED"],
+  COMPLETED: [],
+  CANCELED: [],
+};
+
+export function canTransitionOrderStatus(from: OrderStatus, to: OrderStatus): boolean {
+  return ORDER_STATUS_TRANSITIONS[from].includes(to);
+}
+
 export function isOrderStatus(v: unknown): v is OrderStatus {
   return typeof v === "string" && (ORDER_STATUSES as readonly string[]).includes(v);
 }

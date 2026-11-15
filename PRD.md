@@ -119,8 +119,8 @@ Un dispecer poate să se autentifice, să vadă flota din Baia Mare mișcându-s
 
 **Ce nu funcționează:**
 
-- **Nu există persistență.** Un restart de server sau un refresh înseamnă pierderea tuturor comenzilor.
-  Acesta e blocantul numărul unu al întregului produs.
+- **Persistența există doar pe scriere (#26).** Comenzile se salvează în baza de date și supraviețuiesc unui
+  restart, dar pagina de comenzi nu le citește încă (#27, #32): după un refresh, lista afișată tot e goală.
 - **Pagina de comenzi e montată** din 2026-11-14 (PR #108, taxi-017 pas 1), cu buton Hartă / Comenzi. Fără
   persistență arată doar ce se întâmplă cât e deschisă; datele de test vin din `npm run sim:orders`
   (taxi-055 / #104, PR #109). Harta arată mașinile cu comandă activă în roșu, cele libere în galben (#31, PR #111).

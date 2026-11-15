@@ -48,3 +48,17 @@ export function createPool(connectionString: string, overrides: PoolConfig = {})
 
   return pool;
 }
+
+// Pool-ul comun al API-ului, creat la prima cerere. Întoarce null dacă DATABASE_URL lipsește:
+// rutele care au nevoie de bază răspund atunci 503, în loc să cadă procesul.
+let sharedPool: Pool | null = null;
+
+export function getPool(): Pool | null {
+  if (sharedPool) return sharedPool;
+
+  const url = getDatabaseUrl();
+  if (!url) return null;
+
+  sharedPool = createPool(url);
+  return sharedPool;
+}
