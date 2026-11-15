@@ -303,174 +303,187 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
 
   return (
     <main className={hud.page}>
-      <header className={hud.topHud} aria-label="Comenzi">
-        <div className={hud.brand}>
-          <div className={hud.brandTitle}>Taxi Galant</div>
-          <div className={hud.pageTitle}>{PAGE_TITLE}</div>
-        </div>
-
-        <div className={hud.right}>
-          <div className={hud.pills}>
-            <span className={hud.pill}>
-              <span className={`${hud.dot} ${connected ? hud.dotOn : ""}`} aria-hidden="true" />
-              {connected ? "CONECTAT" : "DECONECTAT"}
-            </span>
-
-            <span className={hud.pillMuted}>pregătit {ready ? "da" : "nu"}</span>
-            <span className={hud.pillMuted}>
-              oraș <span className={hud.mono}>{cityId}</span>
-            </span>
-            <span className={hud.pillMuted}>
-              canal <span className={hud.mono}>{topic}</span>
-            </span>
-
-            <span className={hud.pillMuted}>eroare {lastError ?? "—"}</span>
+      <div className={hud.headStack}>
+        <header className={hud.topHud} aria-label="Comenzi">
+          <div className={hud.brand}>
+            <div className={hud.brandTitle}>Taxi Galant</div>
+            <div className={hud.pageTitle}>{PAGE_TITLE}</div>
           </div>
 
-          <OpsPageNav cityId={cityId} current="orders" />
+          <div className={hud.right}>
+            <div className={hud.pills}>
+              <span className={hud.pill}>
+                <span className={`${hud.dot} ${connected ? hud.dotOn : ""}`} aria-hidden="true" />
+                {connected ? "CONECTAT" : "DECONECTAT"}
+              </span>
 
-          {isHq && token ? (
-            <OpsCitySwitcher authToken={token} currentCityId={cityId} mode="orders" />
-          ) : null}
+              <span className={`${hud.pillMuted} ${hud.hideNarrow}`}>
+                pregătit {ready ? "da" : "nu"}
+              </span>
+              <span className={hud.pillMuted}>
+                oraș <span className={hud.mono}>{cityId}</span>
+              </span>
+              <span className={`${hud.pillMuted} ${hud.hideNarrow}`}>
+                canal <span className={hud.mono}>{topic}</span>
+              </span>
 
-          <ThemeSwitcher />
-        </div>
-      </header>
+              <span className={hud.pillMuted}>eroare {lastError ?? "—"}</span>
+            </div>
 
-      <section className={hud.tableArea} aria-label="Tabelul comenzilor" data-full-bleed="true">
-        <OpsOrdersSearchBar
-          busy={searchBusy}
-          active={searching}
-          onSearch={runSearch}
-          onReset={resetSearch}
-        />
+            <OpsPageNav cityId={cityId} current="orders" />
 
-        {searchError ? (
-          <div className={t.notice} role="alert">
-            Căutarea a eșuat: {searchError}
+            {isHq && token ? (
+              <OpsCitySwitcher authToken={token} currentCityId={cityId} mode="orders" />
+            ) : null}
+
+            <ThemeSwitcher />
           </div>
-        ) : null}
+        </header>
 
-        {activeSearch ? (
-          <div className={t.notice}>
-            <span>
-              Rezultate căutare: {activeSearch.rows.length}{" "}
-              {activeSearch.rows.length === 1 ? "comandă" : "comenzi"}.
-            </span>
-            {activeSearch.hasMore ? (
-              <span>
-                Mai există rezultate dincolo de limita de {LIST_ORDERS_MAX_LIMIT}: restrânge
-                perioada sau adaugă indicativul.
+        <div className={t.searchRow}>
+          <OpsOrdersSearchBar
+            busy={searchBusy}
+            active={searching}
+            onSearch={runSearch}
+            onReset={resetSearch}
+          />
+
+          <div className={t.statusLine} aria-live="polite">
+            {searchError ? (
+              <span className={t.notice} role="alert">
+                Căutarea a eșuat: {searchError}
+              </span>
+            ) : null}
+
+            {activeSearch ? (
+              <span className={t.notice}>
+                Rezultate căutare: {activeSearch.rows.length}{" "}
+                {activeSearch.rows.length === 1 ? "comandă" : "comenzi"}.
+                {activeSearch.hasMore
+                  ? ` Mai există rezultate dincolo de limita de ${LIST_ORDERS_MAX_LIMIT}: restrânge perioada sau adaugă indicativul.`
+                  : ""}
+              </span>
+            ) : null}
+
+            {!searching && snapshotFailure ? (
+              <span className={t.notice} role="alert">
+                Nu am putut încărca comenzile din baza de date ({snapshotFailure}). Apar doar
+                comenzile noi, în timp real.
+                <button type="button" className={t.button} onClick={reloadSnapshot}>
+                  Reîncearcă
+                </button>
               </span>
             ) : null}
           </div>
-        ) : null}
+        </div>
+      </div>
 
-        {!searching && snapshotFailure ? (
-          <div className={t.notice} role="alert">
-            <span>
-              Nu am putut încărca comenzile din baza de date ({snapshotFailure}). Apar doar
-              comenzile noi, în timp real.
-            </span>
-            <button type="button" className={t.button} onClick={reloadSnapshot}>
-              Reîncearcă
-            </button>
-          </div>
-        ) : null}
-
+      <section className={hud.tableArea} aria-label="Tabelul comenzilor" data-full-bleed="true">
         <div className={t.tableWrapFullBleed}>
-          {rows.length === 0 ? (
-            <div className={t.empty}>{emptyText}</div>
-          ) : (
-            <table className={t.table}>
-              <thead className={t.thead}>
-                <tr>
-                  <th className={t.th}>Data</th>
-                  <th className={t.th}>Ora</th>
-                  <th className={t.th}>Preluare</th>
-                  <th className={t.th}>Destinație</th>
-                  <th className={t.th}>Indicativ</th>
-                  <th className={t.th}>Vehicul</th>
-                  <th className={t.th}>Dispecerat</th>
-                  <th className={t.th}>Apel</th>
-                  <th className={t.th}>Comandă</th>
-                  <th className={t.th}>Status</th>
-                  <th className={t.th}>Actualizat</th>
-                </tr>
-              </thead>
+          <table className={t.table}>
+            <colgroup>
+              <col className={t.colWidth.date} />
+              <col className={t.colWidth.time} />
+              <col className={t.colWidth.pickup} />
+              <col className={t.colWidth.dropoff} />
+              <col className={t.colWidth.indicativ} />
+              <col className={t.colWidth.vehicle} />
+              <col className={t.colWidth.dispatch} />
+              <col className={t.colWidth.call} />
+              <col className={t.colWidth.order} />
+              <col className={t.colWidth.status} />
+              <col className={t.colWidth.updated} />
+            </colgroup>
 
-              <tbody>
-                {rows.map((r) => {
-                  const created = toDateTimeParts(r.createdAtIso);
-                  const updated = toDateTimeParts(r.updatedAtIso);
-                  const vStatus = getVehicleStatusForRow(r);
-                  const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
-                  const dispatchDetail = dispatchDetailRo(r.dispatchReason);
-                  const tone = rowTone(r);
-                  const toneClass = tone === "ok" ? t.rowOk : tone === "failed" ? t.rowFailed : "";
+            <thead className={t.thead}>
+              <tr>
+                <th className={t.th}>Data</th>
+                <th className={t.th}>Ora</th>
+                <th className={t.th}>Preluare</th>
+                <th className={t.th}>Destinație</th>
+                <th className={t.th}>Indicativ</th>
+                <th className={t.th}>Vehicul</th>
+                <th className={t.th}>Dispecerat</th>
+                <th className={t.th}>Apel</th>
+                <th className={t.th}>Comandă</th>
+                <th className={t.th}>Status</th>
+                <th className={t.th}>Actualizat</th>
+              </tr>
+            </thead>
 
-                  return (
-                    <tr key={r.orderId} className={`${t.trHover} ${toneClass}`}>
-                      <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
-                      <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
+            <tbody>
+              {rows.map((r) => {
+                const created = toDateTimeParts(r.createdAtIso);
+                const updated = toDateTimeParts(r.updatedAtIso);
+                const vStatus = getVehicleStatusForRow(r);
+                const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
+                const dispatchDetail = dispatchDetailRo(r.dispatchReason);
+                const tone = rowTone(r);
+                const toneClass = tone === "ok" ? t.rowOk : tone === "failed" ? t.rowFailed : "";
 
-                      <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.pickup)}</td>
-                      <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.dropoff)}</td>
+                return (
+                  <tr key={r.orderId} className={`${t.trHover} ${toneClass}`}>
+                    <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
 
-                      <td className={`${t.td} ${t.cellMono}`}>{r.indicativ ?? "—"}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.pickup)}</td>
+                    <td className={`${t.td} ${t.cellMono}`}>{fmtPoint(r.dropoff)}</td>
 
-                      <td className={t.td}>
-                        {vStatus === "—" ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : (
-                          <span className={t.badge}>{VEHICLE_STATUS_LABEL_RO[vStatus]}</span>
-                        )}
-                      </td>
+                    <td className={`${t.td} ${t.cellMono}`}>{r.indicativ ?? "—"}</td>
 
-                      <td className={t.td}>
-                        {r.dispatch === "—" ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : r.dispatch === "OK" ? (
-                          <span className={t.badge}>Alocat</span>
-                        ) : (
-                          <div className={t.rowSplit}>
-                            <span className={t.badge}>Fără mașină liberă</span>
-                            {dispatchDetail ? (
-                              <span className={t.small}>{dispatchDetail}</span>
-                            ) : null}
-                          </div>
-                        )}
-                      </td>
+                    <td className={t.td}>
+                      {vStatus === "—" ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : (
+                        <span className={t.badge}>{VEHICLE_STATUS_LABEL_RO[vStatus]}</span>
+                      )}
+                    </td>
 
-                      <td className={t.td}>
-                        {!called ? (
-                          <span className={t.cellMono}>—</span>
-                        ) : (
-                          <div className={t.rowSplit}>
-                            <span className={t.badge}>Sunat</span>
-                            <span className={t.small}>
-                              {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
-                              {r.calledSource ?? "USER_APP"}
-                            </span>
-                          </div>
-                        )}
-                      </td>
+                    <td className={t.td}>
+                      {r.dispatch === "—" ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : r.dispatch === "OK" ? (
+                        <span className={t.badge}>Alocat</span>
+                      ) : (
+                        <div className={t.rowSplit}>
+                          <span className={t.badge}>Fără mașină liberă</span>
+                          {dispatchDetail ? (
+                            <span className={t.small}>{dispatchDetail}</span>
+                          ) : null}
+                        </div>
+                      )}
+                    </td>
 
-                      <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
+                    <td className={t.td}>
+                      {!called ? (
+                        <span className={t.cellMono}>—</span>
+                      ) : (
+                        <div className={t.rowSplit}>
+                          <span className={t.badge}>Sunat</span>
+                          <span className={t.small}>
+                            {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
+                            {r.calledSource ?? "USER_APP"}
+                          </span>
+                        </div>
+                      )}
+                    </td>
 
-                      <td className={t.td}>
-                        <span className={t.badge}>{STATUS_LABEL_RO[r.status]}</span>
-                      </td>
+                    <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
 
-                      <td className={`${t.td} ${t.cellMono}`}>
-                        {updated.date} {updated.time}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+                    <td className={t.td}>
+                      <span className={t.badge}>{STATUS_LABEL_RO[r.status]}</span>
+                    </td>
+
+                    <td className={`${t.td} ${t.cellMono}`}>
+                      {updated.date} {updated.time}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {rows.length === 0 ? <div className={t.empty}>{emptyText}</div> : null}
         </div>
       </section>
     </main>

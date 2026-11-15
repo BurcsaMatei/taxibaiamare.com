@@ -3,22 +3,32 @@
 // ==============================
 // Imports
 // ==============================
-import { mq, vars } from "@taxi/tokens";
+import { vars } from "@taxi/tokens";
 import { style } from "@vanilla-extract/css";
 
 // ==============================
 // Styles
 // ==============================
+// Pagina nu derulează: sus stă blocul fix (antet + căutare), dedesubt zona tabelului, care derulează singură.
 export const page = style({
-  minHeight: "100svh",
+  display: "grid",
+  gridTemplateRows: "auto minmax(0, 1fr)",
+  height: "100vh",
+  overflow: "hidden",
   background: vars.color.bg,
   color: vars.color.text,
+  "@supports": {
+    "(height: 100dvh)": { height: "100dvh" },
+  },
+});
+
+// blocul fix de sus (antetul + rândul de căutare); deasupra tabelului, ca să nu fie acoperit de meniurile din antet
+export const headStack = style({
+  position: "relative",
+  zIndex: vars.z.header,
 });
 
 export const topHud = style({
-  position: "sticky",
-  top: 0,
-  zIndex: vars.z.overlay,
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -93,6 +103,13 @@ export const pillMuted = style({
   color: vars.color.muted,
 });
 
+// pastilele tehnice se ascund pe ecrane sub 1500px, ca blocul fix de sus să nu ocupe o treime din înălțime
+export const hideNarrow = style({
+  "@media": {
+    "screen and (max-width: 1500px)": { display: "none" },
+  },
+});
+
 export const mono = style({
   fontFamily: vars.typography.font.mono,
 });
@@ -108,12 +125,9 @@ export const dotOn = style({
   background: vars.color.primary,
 });
 
+// containerul care derulează (vertical și orizontal); antetul coloanelor e `sticky` în el, deci rămâne lipit de bara de sus
 export const tableArea = style({
   width: "100%",
-  padding: vars.space.xl,
-  "@media": {
-    [mq.md]: {
-      padding: vars.space.xl,
-    },
-  },
+  minHeight: 0,
+  overflow: "auto",
 });
