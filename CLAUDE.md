@@ -193,7 +193,7 @@ Node 24.x (`.nvmrc`, `engines`, CI; `engines` are prioritate față de dashboard
   Preview**, iar după orice schimbare de variabilă e nevoie de **Redeploy** (altfel „Auth proxy error"). Harta
   poate ieși goală pe Preview: tokenul Mapbox permite doar `ops.taxibaiamare.com` + localhost (403 pe tile-uri);
   nu se lărgește tokenul pentru `*.vercel.app` — harta se verifică pe producție, după merge.
-- **`POST /orders` și `PATCH /orders/:id/status` cer `DATABASE_URL`** (altfel 503). **Local folosește o bază
+- **`POST /orders`, `PATCH /orders/:id/status`, `GET /orders` și `GET /orders/:id` cer `DATABASE_URL`** (altfel 503). **Local folosește o bază
   separată, nu cea de producție** — `sim:orders` scrie comenzi de test. Tranzițiile de status permise sunt în
   `@taxi/shared` (`ORDER_STATUS_TRANSITIONS`).
 - Modulele `api/src/modules/drivers/` și `payments/` sunt stub-uri goale.

@@ -4,8 +4,8 @@
 // Imports
 // ==============================
 import type { Pool } from "pg";
-import { ACTIVE_ORDER_STATUSES } from "@taxi/shared";
-import type { GeoPoint, OrderStatus, ServiceTypeCode } from "@taxi/shared";
+import { ACTIVE_ORDER_STATUSES, isOrderStatus, isServiceTypeCode } from "@taxi/shared";
+import type { GeoPoint, Order, OrderStatus, ServiceTypeCode } from "@taxi/shared";
 
 // ==============================
 // Types
@@ -19,6 +19,32 @@ export type NewOrder = {
   dropoff: GeoPoint;
   assignedVehicleId: string | null;
   dispatchFailedReason: string | null;
+};
+
+export type OrderListFilter = {
+  cityId: string;
+  statuses?: ReadonlyArray<OrderStatus>;
+  vehicleId?: string;
+  from?: Date; // inclusiv
+  to?: Date; // exclusiv
+  limit: number;
+};
+
+export type OrderListResult = { orders: Order[]; hasMore: boolean };
+
+type OrderDbRow = {
+  id: string;
+  city_id: string;
+  service: string;
+  status: string;
+  pickup_lat: number;
+  pickup_lng: number;
+  dropoff_lat: number;
+  dropoff_lng: number;
+  assigned_vehicle_id: string | null;
+  dispatch_failed_reason: string | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type TransitionResult =
@@ -41,9 +67,73 @@ export function isUniqueViolation(e: unknown): boolean {
   return typeof e === "object" && e !== null && (e as { code?: unknown }).code === "23505";
 }
 
+const ORDER_COLUMNS = `id, city_id, service, status, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
+       assigned_vehicle_id, dispatch_failed_reason, created_at, updated_at`;
+
+// Rândul din bază -> `Order` din @taxi/shared (coordonate ca { lat, lng }, timpi ca ISO UTC).
+// Constrângerile din migrația 001 garantează valorile; verificarea de aici doar prinde o bază modificată de mână.
+function rowToOrder(r: OrderDbRow): Order {
+  if (!isServiceTypeCode(r.service) || !isOrderStatus(r.status)) {
+    throw new Error(
+      `orders ${r.id}: valori neașteptate în bază (service=${r.service}, status=${r.status})`,
+    );
+  }
+
+  return {
+    id: r.id,
+    cityId: r.city_id,
+    service: r.service,
+    status: r.status,
+    pickup: { lat: r.pickup_lat, lng: r.pickup_lng },
+    dropoff: { lat: r.dropoff_lat, lng: r.dropoff_lng },
+    assignedVehicleId: r.assigned_vehicle_id,
+    dispatchFailedReason: r.dispatch_failed_reason,
+    createdAt: r.created_at.toISOString(),
+    updatedAt: r.updated_at.toISOString(),
+  };
+}
+
 // ==============================
 // Queries
 // ==============================
+// Lista comenzilor unui oraș, cele mai noi primele, cu filtre opționale. Cerem o comandă în plus ca să știm
+// dacă mai există rezultate dincolo de limită (`hasMore`), fără o interogare separată de numărare.
+export async function listOrders(pool: Pool, f: OrderListFilter): Promise<OrderListResult> {
+  const where: string[] = ["city_id = $1"];
+  const params: unknown[] = [f.cityId];
+
+  const add = (clause: (n: number) => string, value: unknown): void => {
+    params.push(value);
+    where.push(clause(params.length));
+  };
+
+  if (f.statuses && f.statuses.length > 0) add((n) => `status = any($${n})`, [...f.statuses]);
+  if (f.vehicleId) add((n) => `assigned_vehicle_id = $${n}`, f.vehicleId);
+  if (f.from) add((n) => `created_at >= $${n}`, f.from);
+  if (f.to) add((n) => `created_at < $${n}`, f.to);
+
+  params.push(f.limit + 1);
+
+  const res = await pool.query<OrderDbRow>(
+    `select ${ORDER_COLUMNS}
+       from orders
+      where ${where.join(" and ")}
+      order by created_at desc, id desc
+      limit $${params.length}`,
+    params,
+  );
+
+  const hasMore = res.rows.length > f.limit;
+  return { orders: res.rows.slice(0, f.limit).map(rowToOrder), hasMore };
+}
+
+export async function getOrderById(pool: Pool, orderId: string): Promise<Order | null> {
+  const res = await pool.query<OrderDbRow>(`select ${ORDER_COLUMNS} from orders where id = $1`, [
+    orderId,
+  ]);
+  const row = res.rows[0];
+  return row ? rowToOrder(row) : null;
+}
 // Vehiculele cu o comandă activă dintr-un oraș. Baza e sursa adevărului: nu se pierde la restart.
 export async function listBusyVehicleIds(pool: Pool, cityId: string): Promise<Set<string>> {
   const res = await pool.query<{ assigned_vehicle_id: string }>(
