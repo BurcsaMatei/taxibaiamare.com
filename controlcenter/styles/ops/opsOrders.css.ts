@@ -39,29 +39,51 @@ export const thead = style({
   zIndex: 2,
 });
 
+// ✅ separatoare verticale între coloane (nu și după ultima), ca tabelul să se poată citi mai ușor
 export const th = style({
   textAlign: "left",
   padding: vars.space.md,
   borderBottom: `1px solid ${vars.color.border}`,
+  borderRight: `1px solid ${vars.color.border}`,
   color: vars.color.muted,
   fontWeight: 900,
   textTransform: "uppercase",
   letterSpacing: "0.02em",
   whiteSpace: "nowrap",
+  selectors: {
+    "&:last-child": { borderRight: "none" },
+  },
 });
 
 export const td = style({
   padding: vars.space.md,
   borderBottom: `1px solid ${vars.color.border}`,
+  borderRight: `1px solid ${vars.color.border}`,
   verticalAlign: "top",
   fontWeight: 700,
+  selectors: {
+    "&:last-child": { borderRight: "none" },
+  },
 });
 
 // ✅ VE: nu putem face "&:hover td" în selectors; folosim globalStyle
+// (backgroundColor, nu `background`: shorthand-ul ar șterge nuanța rândului, care e un background-image)
 export const trHover = style({});
 
 globalStyle(`${trHover}:hover ${td}`, {
-  background: vars.color.surfaceHover,
+  backgroundColor: vars.color.surfaceHover,
+});
+
+// ✅ rânduri colorate: verde = alocată/în cursă/finalizată, roșu = fără mașină liberă
+export const rowOk = style({});
+export const rowFailed = style({});
+
+globalStyle(`${rowOk} ${td}`, {
+  backgroundImage: `linear-gradient(${vars.color.tintOk}, ${vars.color.tintOk})`,
+});
+
+globalStyle(`${rowFailed} ${td}`, {
+  backgroundImage: `linear-gradient(${vars.color.tintFailed}, ${vars.color.tintFailed})`,
 });
 
 export const cellMono = style({

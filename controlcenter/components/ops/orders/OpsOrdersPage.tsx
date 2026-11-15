@@ -36,6 +36,7 @@ import {
   getVehiclePresence,
   orderToRow,
   parseIsoMs,
+  rowTone,
   STATUS_LABEL_RO,
   toDateTimeParts,
   VEHICLE_STATUS_LABEL_RO,
@@ -405,9 +406,11 @@ export default function OpsOrdersPage(props: OpsOrdersPageProps): React.JSX.Elem
                   const vStatus = getVehicleStatusForRow(r);
                   const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
                   const dispatchDetail = dispatchDetailRo(r.dispatchReason);
+                  const tone = rowTone(r);
+                  const toneClass = tone === "ok" ? t.rowOk : tone === "failed" ? t.rowFailed : "";
 
                   return (
-                    <tr key={r.orderId} className={t.trHover}>
+                    <tr key={r.orderId} className={`${t.trHover} ${toneClass}`}>
                       <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
                       <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
 

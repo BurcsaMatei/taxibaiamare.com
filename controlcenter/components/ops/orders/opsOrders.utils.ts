@@ -46,6 +46,21 @@ export function dispatchDetailRo(reason: string | null): string | null {
 }
 
 // ==============================
+// Culoarea rândului
+// ==============================
+export type RowTone = "ok" | "failed" | "none";
+
+// Roșu: dispecerizarea a eșuat (rămâne roșu oricare ar fi statusul de după, ex. anulată).
+// Verde: comanda a fost alocată și e în curs sau încheiată cu succes.
+// Fără culoare: nouă, fără rezultat încă, sau alocată și apoi anulată.
+export function rowTone(r: OrderRow): RowTone {
+  if (r.dispatch === "FAILED") return "failed";
+  if (r.status === "ASSIGNED" || r.status === "IN_PROGRESS" || r.status === "COMPLETED")
+    return "ok";
+  return "none";
+}
+
+// ==============================
 // Formatare
 // ==============================
 function pad2(n: number): string {
