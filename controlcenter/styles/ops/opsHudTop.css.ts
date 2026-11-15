@@ -26,6 +26,8 @@ export const page = style({
 export const headStack = style({
   position: "relative",
   zIndex: vars.z.header,
+  // separator mai apăsat sub blocul fix, între el și antetul coloanelor (mai puternic decât liniile fine din tabel)
+  borderBottom: `2px solid color-mix(in srgb, ${vars.color.text} 35%, transparent)`,
 });
 
 export const topHud = style({
