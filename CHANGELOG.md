@@ -12,6 +12,22 @@ Convenție de numerotare: `taxi-XXX` = issue intern. Pentru intervalul **#15–#
 
 ---
 
+## 2026-11-15 — taxi-012 (#26): comenzile se salvează în Neon (PR #113)
+
+`POST /orders` salvează comanda **înainte** să publice evenimentele (fără bază sau `DATABASE_URL` → `503`, nimic
+salvat/publicat). „Ocupat" = comandă activă în bază (`listBusyVehicleIds`); `busyVehicles.ts` (memorie) șters.
+Migrația `002`: index unic parțial `(city_id, assigned_vehicle_id)` pe comenzile active — un vehicul, o comandă
+activă; la conflict (23505) API-ul încearcă următorul vehicul (max. 5). Comenzile fără mașină: `NEW` +
+`dispatch_failed_reason = NO_AVAILABLE_VEHICLE`, fără auto-închidere. `PATCH /orders/:id/status`: tranziții din
+`@taxi/shared` (`ORDER_STATUS_TRANSITIONS`; `DISPATCHING` fără tranziții) — pereche imposibilă `400`, `from` ≠
+statusul real `409`, comandă necunoscută / id non-uuid / alt oraș `404`. Testat pe bază temporară: 6 comenzi
+simultane pe 2 vehicule → exact 2 alocate; **control negativ** fără index → 2 comenzi active pe același vehicul;
+ocuparea supraviețuiește restartului. Aplicat pe producție după merge (`002`). **#26 închis.** Rămas: `GET /orders`
+(#27) și pagina de comenzi pe date din bază (#32); comenzile care nu ajung în stare finală ocupă vehiculul (fără
+expirare).
+
+---
+
 ## 2026-11-15 — taxi-011 (#25): driver `pg`, migrații SQL, tabela `orders` (PR #112)
 
 `pg` + `@types/pg` în `api`; `api/src/db/pool.ts` (`createPool`, `sslmode=verify-full` explicit, handler pentru
